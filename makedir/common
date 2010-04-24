@@ -1,0 +1,277 @@
+#******************************************************************************
+#FILE:              $(MAKEDIR)/common
+#LANGUAGE:          make
+#SYSTEM:            UNIX
+#USER-INTERFACE:    None
+#DESCRIPTION
+#    This makefile contains rules to compile programs or libraries.
+#
+#    Input variables are:
+#
+#       $(MAKEDIR)       where the makefiles are located.
+#
+#       $(PREFIX)        where the libraries are installed.
+#                        It will be created a subdirectory in this 
+#                        $(PREFIX) for each library compiled by 
+#                        this makefile.
+#
+#       $(TARGET)        the name of the platform on which we're compiling.
+#                        This is just used to include platform specific
+#                        makefile rules.
+#
+#       $(MODULE)        the name of the group of libraries and programs 
+#                        compiled by this makefile.
+#
+#       $(INTERFACES)    the list of interfaces in ../interfaces/ that must be
+#                        installed to $(PREFIX)/lib/$(MODULE)/interfaces/
+#
+#       $(DOCUMENTATION) the list of documentation files in ../documentation/
+#                        that must be installed to
+#                        $(PREFIX)/lib/$(MODULE)/documentation/
+#
+#       $(CSOURCES)      the list of C sources in ../sources/.
+#       $(OBJCSOURCES)   the list of Objective-C sources in ../sources/.
+#       $(CPLUSSOURCES)  the list of C++ sources in ../sources/.
+#
+#       $(INCLUDES)      the list of includes -I options.
+#
+#		$(LIBRARIES)     the list of library base names
+#                        ( one two tree for libone.a, libtwo.a and libthree.a).
+#
+#       $({lib}_OBJECTS) the list of .o files to be linked to produce 
+#                        the library lib{lib}.a.
+#
+#	    $(PROGRAMS)      the list of program names.
+#
+#       $({pgm}_OBJECTS) the list of .o files to be linked to produce 
+#                        the program {pgm}.
+#
+#       $({pgm}_LIBRARIES) the list of libraries to be linked to produce 
+#                          the program {pgm}.
+#
+#
+#    Output:
+#
+#       $(PREFIX)/bin/{pgm}                    the programs of the module.
+#       $(PREFIX)/man/man{n}/{manpage}{n}      the manual pages of the module.
+#       $(PREFIX)/lib/$(MODULE)/interfaces/    the interface of the module,
+#       $(PREFIX)/lib/$(MODULE)/documentation/ the documentation of the module,
+#       $(PREFIX)/lib/$(MODULE)/libraries/     the libraries of the module.
+#       $(PREFIX)/lib/$(MODULE)/libraries/lib{lib}.a    
+#                                   where the module library will be installed.
+#
+#AUTHORS
+#    <PJB> Pascal J. Bourguignon
+#MODIFICATIONS
+#    2003-12-01 <PJB> Added rules to build several programs or libraries.
+#    2001-06-19 <PJB> Reorganized and simplified.
+#    1993-09-26 <PJB> Made library and program Makefile includes from module.
+#    1993-05-02 <PJB> Moved -Wall to ~/src/common/makedir/target
+#    1992-09-28 <PJB> Nouvelle version simplifiee.
+#    1992-05-27 <PJB> Creation.
+#LEGAL
+#    Copyright Pascal J. Bourguignon 1992 - 2003
+#
+#    This script is free software; you can redistribute it and/or
+#    modify it under the terms of the GNU  General Public
+#    License as published by the Free Software Foundation; either
+#    version 2 of the License, or (at your option) any later version.
+#
+#    This script is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#    General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public
+#    License along with this library; see the file COPYING.LIB.
+#    If not, write to the Free Software Foundation,
+#    59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#******************************************************************************
+include $(MAKEDIR)/common-targets
+.PHONY :: makedirs libraries programs version
+$(COMMON_TARGETS) makedirs libraries programs version ::
+	@ $(CHECK_MODULE) ; $(CHECK_TARGET)
+
+# input:
+#LIBRARIES=
+#INTERFACES=
+#DOCUMENTATION=
+#PROGRAMS=
+#MANPAGES=
+
+# installation:
+BINIDIR=$(PREFIX)/bin
+MANIDIR=$(PREFIX)/man
+DOCIDIR=$(PREFIX)/lib/$(MODULE)/documentation
+INTIDIR=$(PREFIX)/lib/$(MODULE)/interfaces
+LIBIDIR=$(PREFIX)/lib/$(MODULE)/libraries
+
+# submake:
+LIBRARY=dummy
+PROGRAM=dummy
+dummy_OBJECT=
+dummy_LIBRARIES=
+
+-include $(MAKEDIR)/target$(TARGET)
+
+all :: depend libraries programs $(OTHERS)
+
+
+libraries ::
+	@for lib in $(LIBRARIES) CVS ; do \
+		[ "$$lib" = CVS ] ||\
+		$(MAKE) $(MFLAGS) \
+			TARGET=$(TARGET) \
+			MAKEDIR=$(MAKEDIR) \
+			PREFIX=$(PREFIX) \
+			MODULE=$(MODULE) \
+			LIBRARY=$$lib \
+			lib$${lib}.a ;\
+	 done
+
+
+lib$(LIBRARY).a : $($(LIBRARY)_OBJECTS)
+	-@rm -f                  $@
+	$(AR)     $(ARFLAGS)     $@  $^
+	$(RANLIB) $(RANLIBFLAGS) $@
+
+
+programs ::
+	@for pgm in $(PROGRAMS) CVS ; do \
+		[ "$$pgm" = CVS ] ||\
+		$(MAKE) $(MFLAGS) \
+			TARGET=$(TARGET) \
+			MAKEDIR=$(MAKEDIR) \
+			PREFIX=$(PREFIX) \
+			MODULE=$(MODULE) \
+			PROGRAM=$$pgm \
+			$$pgm ;\
+	 done
+
+
+ifeq ($($(PROGRAM)_LD),)
+$(PROGRAM) : $($(PROGRAM)_OBJECTS) $($(PROGRAM)_LIBRARIES)
+	$(LD)            $($(PROGRAM)_LDFLAGS) $(LDFLAGS) -o $@  $^
+else
+$(PROGRAM) : $($(PROGRAM)_OBJECTS) $($(PROGRAM)_LIBRARIES)
+	$($(PROGRAM)_LD) $($(PROGRAM)_LDFLAGS) $(LDFLAGS) -o $@  $^
+endif
+
+
+version VERSION ::
+	@major=0 ; minor=1; step=0.001 ; compilation=0.999 ; extension=beta ;\
+	[ -r VERSION ] && . VERSION ;\
+	compilation=`echo $$compilation $$step  - p | dc | sed -e 's/^\./0./'` ;\
+	echo major=$$major			          > VERSION ;\
+	echo minor=$$minor			         >> VERSION ;\
+	echo step=$$step			         >> VERSION ;\
+	echo compilation=$$compilation       >> VERSION ;\
+	echo extension=$$extension	         >> VERSION 
+
+version.h :: VERSION
+	@ . VERSION ;\
+	echo '===> Compiling '$$major.$$minor-$$compilation-$$extension ;\
+	echo '/* This file is automatically generated by Makefile. */'\
+		                                  > version.h ;\
+	echo '/* Please, do not edit it. */' >> version.h ;\
+	echo '#undef  VERSION'               >> version.h ;\
+	echo '#define VERSION "'$$major.$$minor-$$compilation-$$extension'"' \
+		                                 >> version.h 
+
+# 	@echo P="$(PROGRAMS)" 
+# 	@echo L="$(LIBRARIES)" 
+# 	@echo I="$(INTERFACES)" 
+# 	@echo D="$(DOCUMENTATION)" 
+# 	@echo M="$(MANPAGES)" 
+install :: 
+	@[ -z "$(PROGRAMS)" ] \
+	|| ( umask 022 ;\
+		 mkdir -p $(BINIDIR) 2>/dev/null || true ;\
+		 echo "Installing programs: $(PROGRAMS)" ;\
+		 echo "  in $(BINIDIR)" ;\
+		 install -p -m 755 $(PROGRAMS) $(BINIDIR) )
+	@[ -z "$(LIBRARIES)" ] \
+	|| ( umask 022 ;\
+		 mkdir -p $(LIBIDIR) 2>/dev/null || true ;\
+		 echo "Installing libraries: $(patsubst %,lib%.a,$(LIBRARIES))" ;\
+		 echo "  in $(LIBIDIR)" ;\
+		 install -p -m 644 $(patsubst %,lib%.a,$(LIBRARIES)) $(LIBIDIR) )
+	@[ -z "$(INTERFACES)" ] \
+	|| ( umask 022 ;\
+		 mkdir -p $(INTIDIR) 2>/dev/null || true ;\
+		 echo "Installing interfaces: $(INTERFACES)" ;\
+		 echo "  in $(INTIDIR)" ;\
+		 install -p -m 644 $(patsubst %,../interfaces/%,$(INTERFACES)) $(INTIDIR) )
+	@[ -z "$(DOCUMENTATION)" ] \
+	|| ( umask 022 ;\
+		 mkdir -p $(DOCIDIR) 2>/dev/null || true ;\
+		 echo "Installing documentation: $(DOCUMENTATION)" ;\
+		 echo "  in $(DOCIDIR)" ;\
+		 install -p -m 644 $(patsubst %,../documentation/%,$(DOCUMENTATION)) \
+					$(DOCIDIR) )
+	@umask 022 ;\
+	 for man in $(MANPAGES) CVS ; do \
+		[ "$$man" = CVS ] \
+		|| ( d=$(MANIDIR)/man$$(echo $$man | sed -e 's/.*\.//') ;\
+			echo "Installing manual page: $$man" ;\
+			echo "  in $$d" ;\
+			mkdir -p $$d 2>/dev/null || true ;\
+			install -p -m 644 $$man $$d ) ;\
+	 done
+
+
+depend:: Makefile.depend
+
+Makefile.depend:: $(CSOURCES) $(OBJCSOURCES) $(CPLUSSOURCES) $(M2SOURCES)
+	@echo '# -*- mode: makefile -*-' > Makefile.depend
+	@(\
+	  [ -z "$(CSOURCES)" ] \
+	  || $(APPLY) "$(CCMAKEDEPENDS)     $(CFLAGS)     " $(CSOURCES)     ;\
+	  [ -z "$(OBJCSOURCES)" ] \
+	  || $(APPLY) "$(OBJCMAKEDEPENDS)   $(OBJCFLAGS)  " $(OBJCSOURCES)  ;\
+	  [ -z "$(CPLUSSOURCES)" ] \
+	  || $(APPLY) "$(CCPLUSMAKEDEPENDS) $(CPLUSFLAGS) " $(CPLUSSOURCES) ;\
+	  true \
+	  || $(APPLY) "$(MM2MAKEDEPENDS)    $(M2FLAGS)    " $(M2SOURCES)     \
+	) >> Makefile.depend  #| sed -e 's/:/::/'
+
+
+clean::
+	-rm -f *.o  
+
+cleanall::clean
+	-rm -f *~ .??*~  ../interfaces/*~  $(PROGRAMS) $(patsubst %,lib%.a,$(LIBRARIES))
+
+distclean::cleanall
+	@echo 'For CVS checkins, use make cvsclean.'
+
+cvsclean::distclean
+	-rm -f Makefile.depend
+	find . -name Makefile.depend -print
+
+showvars::
+	@echo "   MAKEDIR       = $(MAKEDIR)"
+	@echo "   PREFIX        = $(PREFIX)"
+	@echo "   TARGET        = $(TARGET)"
+	@echo "   MODULE        = $(MODULE)"
+	@echo "   OTHERS        = $(OTHERS)"
+	@echo "   PROGRAMS      = $(PROGRAMS)"
+	@echo "   MANPAGES      = $(MANPAGES)"
+	@echo "   LIBRARIES     = $(LIBRARIES)"
+	@echo "   DOCUMENTATION = $(DOCUMENTATION)"
+	@echo "   BINIDIR       = $(BINIDIR)"
+	@echo "   MANIDIR       = $(MANIDIR)"
+	@echo "   INTIDIR       = $(INTIDIR)"
+	@echo "   LIBIDIR       = $(LIBIDIR)"
+	@echo "   DOCIDIR       = $(DOCIDIR)"
+
+
+
+
+# This is for Emacs.
+# Local Variables:
+# indent-tabs-mode: t
+# mode: makefile
+# End:
+
+#### common                           -- 2004-01-20 01:14:57 -- pascal   ####

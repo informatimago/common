@@ -1,0 +1,64 @@
+#******************************************************************************
+#FILE:				~/src/common/makedir/AIX
+#LANGUAGE:			make
+#SYSTEM:			UNIX
+#USER-INTERFACE:	None
+#DESCRIPTION
+#	This file defines machine dependant variables to make programs on
+#	queen.pjb.fr (MACH/NeXTstep 3.0)
+#AUTHORS
+#	<PJB> Pascal J. Bourguignon
+#MODIFICATIONS
+#	1992/09/28 <PJB> Creation.
+#	1993/05/02 <PJB> Moved -Wall from ~/src/common/makedir/module
+#	1993/09/26 <PJB> Moved support for C++ in here. 
+#					 Renamed file NeXT (from QUEEN).
+#	1993/09/26 <PJB> Added support for Modula-2.
+#	1994/10/10 <PJB> Adapted for AIX 3.2.
+#LEGAL
+#	Copyright Pascal J. Bourguignon 1992 - 1994
+#	All right reserved
+#	This program may not be included in any commercial product without the 
+#	author written permission. It may be used freely for any non-commercial 
+#	purpose, provided that this header is always included.
+#******************************************************************************
+
+TARGET				=	AIX
+TARGET_INCLUDES		=	
+TARGET_LIBRARIES	=	-lsys_s -lm 
+
+APPLY				=	/usr/ucb/apply
+AR					=	ar
+ARFLAGS				=	cr
+RANLIB				=	ranlib 
+
+## Support for C / Objective-C:
+CC					=	/bin/cc
+CFLAGS				=	-O -g -DAIX 
+CCMAKEDEPENDS		=	$(CC) -M $(INCLUDES)
+.SUFFIXES:: .o .h .c .m 
+.c.o:	; $(CC) $(CFLAGS) $(INCLUDES) -c $<
+.m.o:	; $(CC) $(CFLAGS) $(INCLUDES) -c $<
+
+## Support for C++:
+CCPLUS				=	/bin/cc++
+CPLUSFLAGS			=	-O -g -DAIX
+CCPLUSMAKEDEPENDS	=	$(CCPLUS) -M $(INCLUDES)
+.SUFFIXES:: .o .hh .cc .C
+.C.o:	; $(CCPLUS) $(CPLUSFLAGS) $(INCLUDES) -c -o $*.o $<
+.cc.o:	; $(CCPLUS) $(CPLUSFLAGS) $(INCLUDES) -c -o $*.o $<
+
+## Support for JS-Modula-2:
+MM2					=	/local/languages/jsm2/bin/modula2
+M2FLAGS				=
+MM2MAKEDEPENDS		=	echo m2depend
+.SUFFIXES:: .h .o .md .mi
+.md.h:	; $(MM2) $(M2FLAGS) -O../interfaces $(INCLUDES) $<
+.mi.o:	; $(MM2) $(M2FLAGS) $(INCLUDES) $<
+
+#END AIX
+# This is for Emacs.
+# Local Variables:
+# indent-tabs-mode: t
+# mode: makefile
+# End:

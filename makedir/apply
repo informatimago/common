@@ -1,0 +1,56 @@
+#!/bin/bash
+#*****************************************************************************
+#FILE:               apply
+#LANGUAGE:           bash
+#SYSTEM:             POSIX
+#USER-INTERFACE:     NONE
+#DESCRIPTION
+#    
+#    A xargs wrapper/replacement.
+#    
+#AUTHORS
+#    <PJB> Pascal Bourguignon <pjb@informatimago.com>
+#MODIFICATIONS
+#    2003-11-25 <PJB> Added this comment.
+#BUGS
+#LEGAL
+#    GPL
+#    
+#    Copyright Pascal Bourguignon 2003 - 2003
+#    
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of the GNU General Public License
+#    as published by the Free Software Foundation; either version
+#    2 of the License, or (at your option) any later version.
+#    
+#    This program is distributed in the hope that it will be
+#    useful, but WITHOUT ANY WARRANTY; without even the implied
+#    warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+#    PURPOSE.  See the GNU General Public License for more details.
+#    
+#    You should have received a copy of the GNU General Public
+#    License along with this program; if not, write to the Free
+#    Software Foundation, Inc., 59 Temple Place, Suite 330,
+#    Boston, MA 02111-1307 USA
+#*****************************************************************************
+
+command="$1"
+shift
+tmp=/tmp/apply.$$
+trap "rm -f ${tmp}" exit
+
+xargs --version  >${tmp} 2>&1 && xargs_exists=1 || xargs_exists=0
+read GNU remainder < ${tmp}
+if [ $xargs_exists -ne 0 ] ; then
+    if [ "$GNU" = "GNU" ] ; then
+        echo $* | xargs --no-run-if-empty --verbose $command
+        exit $?
+    fi
+fi
+
+for arg in $* ; do
+	echo $command $arg 1>&2
+	${command} ${arg}
+done
+exit 0
+#### apply                            -- 2003-11-25 05:55:08 -- pascal   ####

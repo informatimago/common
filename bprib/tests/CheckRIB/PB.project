@@ -1,0 +1,26 @@
+PREFIX = "$(HOME)/Apps";
+FILESTABLE = {
+    OTHER_LIBS = (Media_s, NeXT_s);
+    CLASSES = (CheckRIB.m);
+    OTHER_RESOURCES = ();
+    OTHER_SOURCES = (Makefile.preamble, Makefile, Makefile.postamble);
+    H_FILES = (CheckRIB.h);
+    INTERFACES = (CheckRIB.nib);
+    OTHER_LINKED = ();
+    STRINGS_FILES = (CheckRIB.strings);
+    M_FILES = (CheckRIB_main.m);
+};
+GENERATEMAIN = NO;
+DOCICONFILES = ();
+APPCLASS = Application;
+MAINNIB = CheckRIB;
+DOCEXTENSIONS = ();
+PROJECTTYPE = Application;
+PROJECTVERSION = 1.1;
+LOCALIZABLE_FILES = {
+    CheckRIB.nib;
+    CheckRIB.strings;
+};
+PROJECTNAME = CheckRIB;
+SYSTEMEXTENSIONS = ();
+LANGUAGE = English;

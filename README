@@ -1,0 +1,30 @@
+
+makedir     Makefiles.
+
+bclib       Bourguignon's C Library.  A collection of C modules.
+
+bjlib       A simplified version of Bourguignon's C Library. 
+            A collection of C modules.
+
+benlib      Bourguignon's Encoding Library.  Like iconv(1), but much
+            less comprehensive.  But iconv does not have these encodings:
+              - Honeywell 200/2000 series SSF tapes
+              - Honeywell 600/6000 series SSF tapes 
+            See: http://www.gnu.org/software/libiconv/
+
+bolib       Bourguignon's Objective-C Library. A few Objective-C classes.
+
+bplib       Bourguignon's C++ Library. A few C++ classes.
+
+bprib       Bourguignon's C++ RIB Library. RIB = Relevés d'Identité Bancaire,
+            ie. French standardized bank account numbers. (There's now an
+            englobing IBAN standard for European account numbers).
+            Compute and check RIB keys.
+
+bpcombi     Bourguignon's C++ Combinatorial Library. Enumerate
+            combinations and arrangements (generating the permutations
+            lazily, possibly allowing the generation of very set, time
+            being the only limiting factor).
+
+
+The lisp code have been moved to /local/darcs/lisp/*

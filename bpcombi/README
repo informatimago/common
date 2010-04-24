@@ -1,0 +1,13 @@
+This is the bpcombi library directory. It contains:
+
+README				this file.
+specifications/     specification documents.
+analysis/           analysis documents.
+architecture/       architecture and system design documents.
+design/             program design documents.
+documentation/      user or client documentation.
+interfaces/         interface (header) files a client program needs 
+							to use this module.
+sources/            source files.
+reviews/            analysis and code reviews.
+tests/              test files and programs.

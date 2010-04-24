@@ -1,0 +1,207 @@
+{\rtf0\ansi{\fonttbl\f2\fswiss Helvetica;\f1\fmodern Courier;\f5\ftech Symbol;}
+\paperw9840
+\paperh11340
+\margl120
+\margr120
+{\colortbl;\red0\green0\blue0;}
+\pard\tx533\tx1067\tx1601\tx2135\tx2668\tx3202\tx3736\tx4270\tx4803\tx5337\f2\b0\i0\ulnone\fs24\fc0\cf0 Il est possible d'avoir Õ manipuler des ensembles assez grands ; aussi, les objets ÝnumÝratifs de base travailleront sur des entiers et tableaux d'entiers reprÝsentant les index des ÝlÝments des ensembles. On pourra les encapsuler dans des objets reconstituant les ensembles.\
+\
+2^32 >= 2^32\
+2^32 >= 3^20\
+
+\pard\tx520\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\fc0\cf0 2^32 >= 4^16\
+2^32 >= 5^13\
+2^32 >= 6^12\
+2^32 >= 7^11\
+2^32 >= 8^10\
+2^32 >= 9^10\
+2^32 >= 10^9\
+2^32 >= 11^9\
+2^32 >= 12^8\
+2^32 >= 13^8\
+2^32 >= 14^8\
+2^32 >= 15^8\
+2^32 >= 16^8\
+\
+2^32 >= 256^4\
+2^32 >= 257^3\
+............................\
+2^32 >= 1625^3\
+2^32 >= 1626^2\
+............................\
+2^32 >= 65536^2\
+2^32 >= 65537^1\
+............................\
+2^32 >= 4294967296^1\
+
+\pard\tx533\tx1067\tx1601\tx2135\tx2668\tx3202\tx3736\tx4270\tx4803\tx5337\fc0\cf0 \
+\
+
+\f1\b BpSetEnumerator
+\f2\b0 \
+
+\pard\tx2135\tx2668\tx3202\tx3736\tx4270\tx4803\tx5337\li1460\fc0\cf0 This is the abstract class of objects that can enumerate sets (or series) of integer, returned as an array of integer.\
+
+\pard\tx533\tx1067\tx1601\tx2135\tx2668\tx3202\tx3736\tx4270\tx4803\tx5337\fc0\cf0 \
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f1\li720\fc1\cf1 CARD32 cardinal(void);\
+
+\pard\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\li1460\fc1\cf1 PRE: !atBegining().\
+
+\f2 This method returns the number of elements enumerated by this object.\
+\
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f1\li720\fc1\cf1 CARD32 index(void);\
+
+\pard\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\li1460\fc1\cf1 PRE: !atBegining().\
+
+\f2 This method returns the index of the current element enumerated by this object.\
+\
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f1\li720\fc1\cf1 CARD32 elementSize(void);\
+
+\pard\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f2\li1460\fc1\cf1 This method returns the size of each element returned by 
+\f1 getCurrentElement
+\f2  and 
+\f1 getNextElement
+\f2  in the 
+\f1 choice
+\f2  arrays.\
+\
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f1\li720\fc1\cf1 void reset(void);\
+
+\pard\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\li1460\fc1\cf1 POST: atBegining().\
+
+\f2 This method reset the enumeration. \
+\
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f1\li720\fc1\cf1 BOOLEAN atBegining(void);\
+
+\pard\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f2\li1460\fc1\cf1 This method returns whether the 
+\f1 reset()
+\f2  method has been called and 
+\f1 getNextElement()
+\f2   (or 
+\f1 getCurrentElement()
+\f2 ) has not already been called. \
+\
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f1\li720\fc1\cf1 void getCurrentElement(CARD32 choice[]);\
+
+\pard\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\li1460\fc1\cf1 PRE:  cardinal()>0.\
+POST: !atBegining(),\
+      choice[0]...choice[elementSize()-1] are set.\
+
+\f2 This method sets the 
+\f1 choice
+\f2  array to the current enumerated element. (ie. the last element retrived with the 
+\f1 getNextElement
+\f2  method). The 
+\f1 choice
+\f2  array must contain at least 
+\f1 elementSize()
+\f2  integers.\
+\
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f1\li720\fc1\cf1 BOOLEAN getNextElement(CARD32 choice[]);\
+
+\pard\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\li1460\fc1\cf1 PRE:  cardinal()>0, !done(), atBegining()=b, \
+      (!b => index()=a).\
+POST: !atBegining(), (!b => index()=a+1),\
+      choice[0]...choice[elementSize()-1] are set.\
+
+\f2 This method computes the next element to be enumerated and sets the 
+\f1 choice
+\f2  array to it. It returns TRUE when the last element is retrived, ie. all elements have been enumerated. The 
+\f1 choice
+\f2  array must contain at least 
+\f1 elementSize()
+\f2  integers.\
+\
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f1\li720\fc1\cf1 BOOLEAN done(void);\
+
+\pard\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\li1460\fc1\cf1 RETURN: !atBegining() \
+        && ((cardinal()=0) || (index()=cardinal())).\
+
+\f2 This method returns TRUE when all elements have been enumerated.\
+
+\f1 \
+
+\pard\tx520\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\fc1\cf1 \
+
+\pard\tx533\tx1067\tx1601\tx2135\tx2668\tx3202\tx3736\tx4270\tx4803\tx5337\fc1\cf1 \
+\
+
+\pard\tx520\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\b\fc0\cf0 BpSetFunctor
+\f2\b0 \
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f1\li720\fc1\cf1 INHERIT FROM: BpObject, BpSetEnumerator\
+
+\pard\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f2\li1460\fc0\cf0 This is the abstract class of sets or series of integer that are function of another set  of integer.\
+
+\pard\tx520\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\fc0\cf0 \
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f1\li720\fc1\cf1 CARD32 baseCardinal(void);\
+
+\pard\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\li1460\fc1\cf1 RETURN: the cardinal of the base set. \
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\li720\fc1\cf1 \
+void baseCardinal(CARD32 card);\
+
+\pard\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\li1460\fc1\cf1 PRE:  c=card. \
+POST: baseCardinal()=c.\
+
+\f2 This method informs this about the number of elements in the set of which this is function.\
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f1\li720\fc1\cf1 \
+void elementSize(CARD32 size);\
+
+\pard\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\li1460\fc1\cf1 PRE:  s=size.\
+POST: elementSize()=s. \
+
+\f2 This method sets the 
+\f1 elementSize()
+\f2  parameter.\
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f1\li720\fc1\cf1 \
+void initialize(void); \{abstract\}\
+
+\pard\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f2\li1460\fc1\cf1 This is an abstract protected method. It must be overriden by subclasses to initialize the enumeration. It must compute the 
+\f1 _cardinal
+\f2 , and set 
+\f1 the_index
+\f2  either to 0 or to 
+\f1 _cardinal
+\f2 . If 
+\f1 _index
+\f5 ¹
+\f1 _cardinal
+\f2  then the 
+\f1 choice
+\f2  array must be set to the first enumerated element.\
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f1\li720\fc1\cf1 \
+void next(void); \{abstract\}\
+
+\pard\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f2\li1460\fc1\cf1 This is an abstract protected method. It must be overriden by subclasses to step to the next element of the enumeration. If 
+\f1 _index
+\f2 <
+\f1 _cardinal
+\f2 , then it must increment 
+\f1 _index
+\f2  ; if 
+\f1 _index
+\f5 ¹
+\f1 _cardinal
+\f2  then the 
+\f1 choice
+\f2  array must be set to the first enumerated element.\
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f1\li720\fc1\cf1 \
+void computeCardinal(void); \{abstract\}\
+
+\pard\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f2\li1460\fc1\cf1 This is an abstract protected method. It must be overriden by subclasses to compute the _cardinal from the _baseCardinal and the _elementSize attributes.\
+
+}

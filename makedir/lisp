@@ -1,0 +1,477 @@
+#*****************************************************************************
+#FILE:               lisp
+#LANGUAGE:           makefile
+#SYSTEM:             unix
+#USER-INTERFACE:     none
+#DESCRIPTION
+#    
+#    Rules to compile lisp libraries and programs.
+#    
+#AUTHORS
+#    <PJB> Pascal Bourguignon
+#MODIFICATIONS
+#    2003-05-08 <PJB> Created.
+#BUGS
+#    PACKAGE_PATH is not relative to the package.
+#    CLISP_LINKINGSET is not relative to the package.
+#LEGAL
+#    GPL
+#    
+#    Copyright Pascal Bourguignon 2003 - 2003
+#    mailto:pjb@informatimago.com
+#    
+#    This program is free software; you can redistribute it and/or
+#    modify it under the terms of the GNU General Public License
+#    as published by the Free Software Foundation; either version
+#    2 of the License, or (at your option) any later version.
+#    
+#    This program is distributed in the hope that it will be
+#    useful, but WITHOUT ANY WARRANTY; without even the implied
+#    warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+#    PURPOSE.  See the GNU General Public License for more details.
+#    
+#    You should have received a copy of the GNU General Public
+#    License along with this program; if not, write to the Free
+#    Software Foundation, Inc., 59 Temple Place, Suite 330,
+#    Boston, MA 02111-1307 USA
+#*****************************************************************************
+include $(MAKEDIR)/common-targets
+-include $(MAKEDIR)/target$(TARGET)
+include $(MAKEDIR)/common
+.PHONY :: emacs clisp cmucl sbcl programs install-packages
+COMMON=$(MAKEDIR)/..
+PACKAGES=$(PREFIX)/share/lisp/packages
+TRACE=@
+
+# $PACKAGES/$PACKAGE_PATH/$FILE.lisp
+# Parameters:
+#    {EMACS,CLISP,CMUCL,SBCL}_{SOURCES,FLAGS,PROGRAMS}
+
+AWK=/usr/bin/awk
+
+LISP_SOURCE_SUFFIXES= .el   .lisp
+LISP_OBJECT_SUFFIXES= .elc  .fas .lib   .x86f   .fasl 
+
+.SUFFIXES:: $(LISP_SOURCE_SUFFIXES) $(LISP_OBJECT_SUFFIXES)
+
+
+# ------------------------------------------------------------------------
+# SBCL:
+# ------------------------------------------------------------------------
+SBCL=sbcl
+#	--eval '(SETQ *EFFICIENCY-NOTE-COST-THRESHOLD* 3)'      \
+#	--eval '(SETQ *EFFICIENCY-NOTE-LIMIT* 3)'                \
+#
+SBCL_FLAGS_DEFAULT=                         \
+	--noinform                               \
+	--sysinit /dev/null --userinit /dev/null  \
+	--eval "(DECLAIM (OPTIMIZE (SAFETY 3)))"   \
+	--eval "(DECLAIM (OPTIMIZE (SB-EXT::INHIBIT-WARNINGS 3)))" 
+SBCL_FLAGS=$(SBCL_FLAGS_DEFAULT)
+SBCL_INIT=(load (merge-pathnames \"init.lisp\" (CAR (DIRECTORY \".\"))))
+SBCL_DEBUG=
+SBCL_NODEBUG=--eval "(SB-EXT:DISABLE-DEBUGGER)"
+
+
+SBCL_IMG=$(PGMNAME)-sbcl/$(PGMNAME).core
+SBCL_BIN=$(PGMNAME)-sbcl/$(PGMNAME).bin
+SBCL_EXE=$(PGMNAME)-sbcl/$(PGMNAME)
+
+SBCL_PACKAGES:=$($(SBCL) $(SBCL_FLAGS) --eval "$(SBCL_INIT)" --eval '(PROGN (SETQ *LOAD-VERBOSE* NIL) (PRINT (MAPCAR (FUNCTION PACKAGE-NAME) (LIST-ALL-PACKAGES))) (SB-EXT:QUIT))')
+
+
+%.fasl : %.lisp
+	@ echo "$(LINE4)"
+	@ echo "Generating $@..." 
+	$(TRACE) $(SBCL) $(SBCL_FLAGS) --eval "$(SBCL_INIT)" --eval '(COMPILE-FILE "$<")' --eval '(SB-EXT:QUIT)' 2>&1 
+
+#| $(AWK)  'BEGIN{l=0;s=0;} /; recognizing/{next;} /compiling top level form:/{next;} /; in:/{l=0;line[l++]=$$0;next;} /; note:/{s=1;line[l++]=$$0;next;} /; ERROR/{s=4;line[l++]=$$0;next;} { if(s==0){ if(l>0){ line[l++]=$$0;}else{ print $$0; } }else{ if(s==4){ for(i=0;i<l;i++){ print line[i]; }} l=0; if(substr($$0,1,4)==";   "){ if(s==4){ print $$0; } }else{ s=0; }}}'
+
+
+$(SBCL_IMG) : $($(PGMNAME)_OBJECTS) $($(PGMNAME)_SBCL_OBJECTS)
+	@ echo "Generating $(SBCL_IMG)"
+	$(TRACE) $(SBCL) $(SBCL_FLAGS) $(SBCL_DEBUG) --eval "$(SBCL_INIT)" --eval "(LOAD \"$($(PGMNAME)_ROOT)\")" --eval "(DEFUN MAIN () ($($(PGMNAME)_PKGNAME):MAIN (READ-FROM-STRING (SB-EXT:POSIX-GETENV \"ARGUMENTS\"))) (SB-EXT:QUIT))" --eval "(SB-EXT:SAVE-LISP-AND-DIE \"$(SBCL_IMG)\" :TOPLEVEL (FUNCTION MAIN) :PURIFY T)"
+
+
+$(SBCL_BIN) :
+	@ echo "Generating $(SBCL_BIN)"
+	-$(TRACE) mkdir -m 755 -p $(PGMNAME)-sbcl >/dev/null 2>&1 || true
+	$(TRACE) cp `which $(SBCL)` $(SBCL_BIN)
+
+
+$(SBCL_EXE) : $(SBCL_BIN) $(SBCL_IMG)
+	@ echo "Generating $(SBCL_EXE)"
+	-$(TRACE) mkdir -m 755 -p $(PGMNAME)-sbcl >/dev/null 2>&1 || true
+	$(TRACE) echo '#!/bin/bash' > $(SBCL_EXE)
+	$(TRACE) echo 'export ARGUMENTS="$$(echo -n \(\ ;for arg in "$$0" "$$@";do b="$${arg//\\\\/\\\\}";c="$${b//\"/\\\"}";echo -n \""$${c}"\"\ ;done;echo \))"' >>$(SBCL_EXE)
+	$(TRACE) echo 'exec "$$(dirname $$0)/$(PGMNAME).bin" $(SBCL_FLAGS) --core "$$(dirname $$0)/$(PGMNAME).core" --end-toplevel-options $$@" >> $(SBCL_EXE)
+	$(TRACE) chmod 755 $(SBCL_BIN) $(SBCL_EXE)
+	$(TRACE) chmod 644 $(SBCL_IMG).gz
+
+
+# ------------------------------------------------------------------------
+# CMUCL:
+# ------------------------------------------------------------------------
+CMUCL=cmucl
+CMUCL_FLAGS_DEFAULT=
+%.x86f : %.lisp
+	@ echo "$(LINE4)"
+	@ echo "Generating $@"
+	$(TRACE) $(CMUCL) $(CMUCL_FLAGS) -eval '(COMPILE-FILE "'"$<"'")' -eval '(QUIT)' 2>&1 | grep -Fv '[GC'
+
+CMUCL_PACKAGES:=$( $(CMUCL) -eval '(SETQ *LOAD-VERBOSE* NIL) (PRINT (MAPCAR (FUNCTION PACKAGE-NAME) (LIST-ALL-PACKAGES))) (QUIT)'|grep -v '; Load')
+
+#CMUCL_INIT=-nositeinit -hinit /dev/null -init
+
+
+# ------------------------------------------------------------------------
+# CLISP:
+# ------------------------------------------------------------------------
+ifeq ($(shell hostname),triton)
+CLISP=/usr/bin/clisp
+else
+CLISP=/usr/local/bin/clisp
+endif
+#CLISP_LIB=/local/languages/clisp/lib/clisp
+CLISP_FLAGS_DEFAULT=-q -ansi -norc # no -K full since we want plain COMMON-LISP
+CLISP_FLAGS=$(CLISP_FLAGS_DEFAULT)
+CLISP_INIT=(load (merge-pathnames \"init.lisp\" (ext:cd)))
+CLISP_DEBUG=-interactive-debug
+CLISP_NODEBUG=
+
+# $(PGMNAME)-clisp/$(PGMNAME)  
+#             -- A script to lauch (PGMNAME)-clisp/$(PGMNAME).bin == clisp
+#
+# $(PGMNAME)-clisp/$(PGMNAME).bin
+#             -- It's a copy of clisp driver. 
+#             -- It runs  $(PGMNAME)-clisp/full/lisp.run, and 
+#             -- It loads $(PGMNAME)-clisp/$(PGMNAME).mem
+
+# IMG : lisp image
+# BIN : lisp binary (executable)
+# EXE : trampoline: small shell script used to launch the binary passing it
+#       the command-line arguments (in the ARGUMENT environment variable),
+#       and the lisp image and other options.
+
+CLISP_IMG=$(PGMNAME)-clisp/$(PGMNAME).mem
+CLISP_BIN=$(PGMNAME)-clisp/$(PGMNAME).bin
+CLISP_EXE=$(PGMNAME)-clisp/$(PGMNAME)
+CLISP_LSD=$(PGMNAME)-clisp/$(CLISP_LINKINGSET)
+
+CLISP_PACKAGES:=$($(CLISP) $(CLISP_FLAGS) -x '(progn (setq *load-verbose* nil) (mapcar (function package-name) (list-all-packages)))' |grep -v ';; Load')
+
+
+%.fas %.lib: %.lisp
+	@ echo "$(LINE4)"
+	@ echo "Generating $@"
+	$(TRACE) case "$(CLISP_FLAGS)" in \
+		*$(CLISP_DEBUG)*) $(CLISP) $(CLISP_FLAGS) -x "$(CLISP_INIT) (PROG1 (VALUES) (COMPILE-FILE \"$<\")) (EXT:QUIT)" ;;\
+		*) $(CLISP) $(CLISP_FLAGS) -x "$(CLISP_INIT) (PROG1 (VALUES) (COMPILE-FILE \"$<\")) (EXT:QUIT)" 2>&1 \
+			| $(AWK) '/Compiling file.*\.\.\./{l=gensub("file /.*/","","",$$0);next;} /Loading/{next;} /Loaded/{next;} /^$$/{if(l!=""){print l;l="";next;}} {print $$0}' \
+			| $(AWK) -v file="$<" ' / in lines /{ ei=index($$0," in "); error=substr($$0,1,ei); pi=index($$0," in lines "); proc=substr($$0,ei+4,pi-ei-4); li=index($$0,".."); from=substr($$0,pi+10,li-pi-10); to=substr($$0,li+2); printf("\n%s:%d: In function %s\n%s:%d: %s ",file,(1+from),proc,file,to,error); next; } { print $$0; }' ;; esac \
+			| $(AWK) -v file="$<" '/ in .* in lines /{split($$6,n,"\\.");printf "%s:%s: %s in %s\n%s:%s: %s in %s\n",file,n[1],$$1,$$3,file,n[3],$$1,$$3;next;}{print $$0;}'
+
+
+$(CLISP_IMG) : $($(PGMNAME)_OBJECTS) $($(PGMNAME)_CLISP_OBJECTS) 
+	@ echo "Generating $(CLISP_IMG)"
+	-$(TRACE) mkdir -m 755 -p $(CLISP_LSD) >/dev/null 2>&1 || true
+	$(TRACE) $(CLISP) $(CLISP_FLAGS) $(CLISP_DEBUG) -x "$(CLISP_INIT) (LOAD \"$($(PGMNAME)_ROOT)\") (DEFUN MAIN () ($($(PGMNAME)_PKGNAME):MAIN (READ-FROM-STRING (EXT:GETENV \"ARGUMENTS\"))) (EXT:QUIT)) (EXT:SAVEINITMEM \"$(CLISP_IMG)\" :QUIET T :INIT-FUNCTION (FUNCTION MAIN)) (EXT:QUIT)"
+
+
+$(CLISP_IMG).gz : $(CLISP_IMG)
+	$(TRACE) gzip -f $(CLISP_IMG)
+
+
+$(CLISP_BIN) :
+	@ echo "Generating $(CLISP_BIN)"
+	-$(TRACE) mkdir -m 755 -p $(CLISP_LSD) >/dev/null 2>&1 || true
+	$(TRACE) cp `which $(CLISP)` $(CLISP_BIN)
+
+
+$(CLISP_EXE) : $(CLISP_BIN) $(CLISP_IMG).gz
+	@ echo "Generating $(CLISP_EXE)"
+	-$(TRACE) mkdir -m 755 -p $(CLISP_LSD) >/dev/null 2>&1 || true
+	$(TRACE) echo '#!/bin/bash' > $(CLISP_EXE)
+	$(TRACE) echo 'export ARGUMENTS="$$(echo -n \(\ ;for arg in "$$0" "$$@";do b="$${arg//\\\\/\\\\}";c="$${b//\"/\\\"}";echo -n \""$${c}"\"\ ;done;echo \))"' >>$(CLISP_EXE)
+	$(TRACE) echo 'exec "$$(dirname $$0)/$(PGMNAME).bin" $(CLISP_FLAGS) -M "$$(dirname $$0)/$(PGMNAME).mem.gz"' >> $(CLISP_EXE)
+	$(TRACE) chmod 755 $(CLISP_BIN) $(CLISP_EXE)
+	$(TRACE) chmod 644 $(CLISP_IMG).gz
+
+
+# # $(PGMNAME)-clisp/$(PGMNAME).bin:
+# # 	@ echo "Generating $@"
+# # 	$(TRACE) -umask 022 ;\
+# # 	 mkdir -p $(PGMNAME)-clisp/$(CLISP_LINKINGSET) >/dev/null 2>&1 || true
+# # 	$(TRACE) cp $(CLISP) $(PGMNAME)-clisp/$(PGMNAME).bin
+
+
+# # $(PGMNAME)-clisp/$(PGMNAME).mem.gz : $($(PGMNAME)_OBJECTS) $($(PGMNAME)_CLISP_OBJECTS) 
+# # 	@ echo "Generating $@"
+# # 	$(TRACE) -umask 022 ;\
+# # 	 mkdir -p $(PGMNAME)-clisp/$(CLISP_LINKINGSET) >/dev/null 2>&1 || true
+# # 	$(TRACE) $(CLISP) $(CLISP_FLAGS) -x "(LOAD \"$($(PGMNAME)_ROOT)\") (DEFUN MAIN () ($($(PGMNAME)_PKGNAME):MAIN (READ-FROM-STRING (EXT:GETENV \"ARGUMENTS\"))) (EXT:QUIT)) (EXT:SAVEINITMEM \"$(PGMNAME)-clisp/$(PGMNAME).mem\" :QUIET T :INIT-FUNCTION (FUNCTION MAIN)) (EXT:QUIT)"
+# # 	$(TRACE) gzip -f $(PGMNAME)-clisp/$(PGMNAME).mem
+
+
+# # $(PGMNAME)-clisp/$(PGMNAME) : 	$(PGMNAME)-clisp/$(PGMNAME).bin \
+# # 								$(PGMNAME)-clisp/$(PGMNAME).mem.gz 
+# # 	@ echo "Generating $@"
+# # 	$(TRACE) -umask 022 ;\
+# # 	 mkdir -p $(PGMNAME)-clisp/$(CLISP_LINKINGSET) >/dev/null 2>&1 || true
+# # 	$(TRACE) echo '#!/bin/bash' > $@
+# # 	$(TRACE) echo 'export ARGUMENTS="$$( echo -n \( ; for arg ; do echo -n \""$${arg}"\" ; done ; echo \) )"' >> $@
+# # 	$(TRACE) echo 'exec $$(dirname $$0)/$(PGMNAME).bin -q -norc $(CLISP_FLAGS) -M $$(dirname $$0)/$(PGMNAME).mem.gz' >> $@
+# # 	$(TRACE) chmod 755 $(PGMNAME)-clisp/$(PGMNAME).bin $@
+# # 	$(TRACE) chmod 644 $(PGMNAME)-clisp/$(PGMNAME).mem.gz
+
+
+
+
+# ------------------------------------------------------------------------
+# EMACS:
+# ------------------------------------------------------------------------
+EMACS=emacs
+EMACS_FLAGS_DEFAULT=
+%.elc : %.lisp
+	@ echo "$(LINE4)"
+	@ echo "Generating $@" 
+	$(TRACE) $(EMACS) -batch -q  $(EMACS_FLAGS) -f batch-byte-compile $< 2>&1 \
+	| awk 'BEGIN{s=0;} /Loading .*fns-/{next;} /Warning: Function .* from cl package/{s=1;next;} {if(s==0){print $0}else{s=0;next;}}'
+	-@ mv $<.elc $@
+# See also .emacs in this directory with the load-path used to compile.
+
+%.elc : %.el
+	@ echo "$(LINE4)"
+	@ echo "Generating $@" 
+	$(TRACE) $(EMACS) -batch -q $(EMACS_FLAGS) -f batch-byte-compile $< 2>&1 \
+	| awk 'BEGIN{s=0;} /Loading .*fns-/{next;} /Warning: Function .* from cl package/{s=1;next;} {if(s==0){print $0}else{s=0;next;}}'
+# See also .emacs in this directory with the load-path used to compile.
+
+# ------------------------------------------------------------------------
+
+
+EMACS_OBJECTS:=$(LISP_SOURCES:.lisp=.elc) \
+			   $(EMACS_SOURCES:.el=.elc)   \
+			   $($(PGMNAME)_EMACS_OBJECTS)
+CLISP_OBJECTS:=$(LISP_SOURCES:.lisp=.fas) \
+			   $(LISP_SOURCES:.lisp=.lib)  \
+			   $(CLISP_SOURCES:.lisp=.fas)  \
+			   $(CLISP_SOURCES:.lisp=.lib)   \
+			   $($(PGMNAME)_CLISP_OBJECTS)
+CMUCL_OBJECTS:=$(LISP_SOURCES:.lisp=.x86f) \
+			   $(CMUCL_SOURCES:.lisp=.x86f) \
+			   $($(PGMNAME)_CMUCL_OBJECTS)
+SBCL_OBJECTS:= $(LISP_SOURCES:.lisp=.fasl) \
+			   $(SBCL_SOURCES:.lisp=.fasl)  \
+			   $($(PGMNAME)_SBCL_OBJECTS)
+LISP_OBJECTS:= $(EMACS_OBJECTS)        \
+			   $(CLISP_OBJECTS)         \
+			   $(CMUCL_OBJECTS)          \
+			   $(SBCL_OBJECTS)            \
+			   $($(PGMNAME)_EMACS_OBJECTS) \
+			   $($(PGMNAME)_CLISP_OBJECTS)  \
+			   $($(PGMNAME)_CMUCL_OBJECTS)   \
+			   $($(PGMNAME)_SBCL_OBJECTS)
+
+
+emacs:: $(EMACS_OBJECTS)
+clisp:: $(CLISP_OBJECTS)
+cmucl:: $(CMUCL_OBJECTS)
+sbcl::  $(SBCL_OBJECTS)
+
+
+
+PGMNAME=dummy
+dummy_PKGNAME=COM.INFORMATIMAGO.DUMMY
+
+# ------------------------------------------------------------------------
+# Compiling & installing lisp programs:
+#
+# Targets: programs  install-programs
+# Input:   CLISP_PROGRAMS SBCL_PROGRAMS CMUCL_PROGRAMS EMACS_PROGRAMS
+# Output:  $(BINIDIR)/$(PGMNAME)-{clisp,sbcl,cmucl,emacs}/*
+#          $(BINIDIR)/$(PGMNAME)
+
+programs:: 
+	@ echo $(LINE3)
+	$(TRACE) for p in $(CLISP_PROGRAMS) NONE ; do \
+		[ "$$p" = NONE ] || $(MAKE) $(MFLAGS) PGMNAME=$$p $$p-clisp/$$p ;\
+	done
+	$(TRACE) for p in $(SBCL_PROGRAMS) NONE ; do \
+		[ "$$p" = NONE ] || $(MAKE) $(MFLAGS) PGMNAME=$$p $$p-sbcl/$$p ;\
+	done
+	$(TRACE) for p in $(CMUCL_PROGRAMS) NONE ; do \
+		[ "$$p" = NONE ] || $(MAKE) $(MFLAGS) PGMNAME=$$p $$p-cmucl/$$p ;\
+	done
+	$(TRACE) for p in $(EMACS_PROGRAMS) NONE ; do \
+		[ "$$p" = NONE ] || $(MAKE) $(MFLAGS) PGMNAME=$$p $$p-emacs/$$p ;\
+	done
+
+
+install-programs::
+	@ echo $(LINE3)
+	$(TRACE) umask 022 ; mkdir -p $(BINIDIR) 2>/dev/null || true
+	$(TRACE) umask 022 ;\
+	for p in $(CLISP_PROGRAMS) NONE ; do [ $$p = NONE ] || (\
+	 	echo "Installing program: $$p" ;\
+	 	echo "  in $(BINIDIR)" ;\
+		cp -r $$p-clisp  $(BINIDIR)/$$p-clisp ;\
+	    ( echo "#!/bin/bash" ; echo "exec \"\$$0\"-clisp/$$p" )>$(BINIDIR)/$$p;\
+		chmod 755 $(BINIDIR)/$$p ;\
+		echo $(LINE4) ;\
+	) ; done
+	$(TRACE) umask 022 ;\
+	for p in $(CMUCL_PROGRAMS) NONE ; do [ $$p = NONE ] || (\
+	 	echo "Installing program: $$p" ;\
+	 	echo "  in $(BINIDIR)" ;\
+		cp -r $$p-cmucl  $(BINIDIR)/$$p-cmucl ;\
+	    ( echo "#!/bin/bash" ; echo "exec \"\$$0\"-cmucl/$$p" )>$(BINIDIR)/$$p;\
+		chmod 755 $(BINIDIR)/$$p ;\
+		echo $(LINE4) ;\
+	) ; done
+	$(TRACE) umask 022 ;\
+	for p in $(SBCL_PROGRAMS) NONE ; do [ $$p = NONE ] || (\
+	 	echo "Installing program: $$p" ;\
+	 	echo "  in $(BINIDIR)" ;\
+		cp -r $$p-sbcl  $(BINIDIR)/$$p-sbcl ;\
+	    ( echo "#!/bin/bash" ; echo "exec \"\$$0\"-sbcl/$$p" )>$(BINIDIR)/$$p ;\
+		chmod 755 $(BINIDIR)/$$p ;\
+		echo $(LINE4) ;\
+	) ; done
+
+
+# ------------------------------------------------------------------------
+# Compiling & installing lisp scripts:
+#
+# Targets: scripts  install-scripts
+# Input:   CLISP_SCRIPTS SBCL_SCRIPTS CMUCL_SCRIPTS EMACS_SCRIPTS
+# Output:  $(BINIDIR)/$(PGMNAME)
+
+scripts::
+	@ echo $(LINE3)
+	$(TRACE) for p in $(CLISP_SCRIPTS) NONE ; do \
+		[ "$$p" = NONE ] || $(MAKE) $(MFLAGS) PGMNAME=$$p $$p-clisp-script ;\
+	done
+	$(TRACE) for p in $(SBCL_SCRIPTS) NONE ; do \
+		[ "$$p" = NONE ] || $(MAKE) $(MFLAGS) PGMNAME=$$p $$p-sbcl-script ;\
+	done
+	$(TRACE) for p in $(CMUCL_SCRIPTS) NONE ; do \
+		[ "$$p" = NONE ] || $(MAKE) $(MFLAGS) PGMNAME=$$p $$p-cmucl-script ;\
+	done
+	$(TRACE) for p in $(EMACS_SCRIPTS) NONE ; do \
+		[ "$$p" = NONE ] || $(MAKE) $(MFLAGS) PGMNAME=$$p $$p-emacs-script ;\
+	done
+
+
+$(PGMNAME)-clisp-script: $($(PGMNAME)_CLISP_OBJECTS)
+	@ echo "Generating $@"
+	$(TRACE) echo "#!$(CLISP) $(CLISP_FLAGS) -K $(CLISP_LINKINGSET)" > $@
+	$(TRACE) echo '(LOAD "~/.clisprc.lisp")' >> $@
+	$(TRACE) for m in  $($(PGMNAME)_CLISP_OBJECTS) ; do \
+		echo "    Appending $$m..." ; cat $$m >> $@ ;\
+	done
+	$(TRACE) chmod 755 $@
+
+
+$(PGMNAME)-sbcl-script:
+	@ echo "$(MAKEDIR)/lisp:267: sbcl script generation not implemented yet." ; exit 1
+$(PGMNAME)-cmucl-script:
+	@ echo "$(MAKEDIR)/lisp:267: cmucl script generation not implemented yet." ; exit 1
+$(PGMNAME)-emacs-script:
+	@ echo "$(MAKEDIR)/lisp:267: emacs script generation not implemented yet." ; exit 1
+
+
+install-scripts::
+	@ echo $(LINE3)
+	$(TRACE) umask 022 ; mkdir -p $(BINIDIR) 2>/dev/null || true
+	$(TRACE) umask 022 ;\
+	for p in $(CLISP_SCRIPTS) NONE ; do [ $$p = NONE ] || (\
+		echo "Installing script: $$p" ;\
+	 	echo "  in $(BINIDIR)" ;\
+		install -p -m 775 $$p-clisp-script  $(BINIDIR)/$$p ;\
+		echo $(LINE4) ;\
+	) ; done
+	$(TRACE) if [ -n "$(SBCL_SCRIPTS)" ] ; then \
+	 echo "$(MAKEDIR)/lisp:287: sbcl script generation not implemented yet.";\
+	 exit 1 ; fi
+	$(TRACE) if [ -n "$(CMUCL_SCRIPTS)" ] ; then \
+	 echo "$(MAKEDIR)/lisp:287: cmucl script generation not implemented yet.";\
+	 exit 1 ; fi
+	$(TRACE) if [ -n "$(EMACS_SCRIPTS)" ] ; then \
+	 echo "$(MAKEDIR)/lisp:287: emacs script generation not implemented yet.";\
+	 exit 1 ; fi
+
+
+# ------------------------------------------------------------------------
+# Compiling & installing lisp packages:
+#
+# Targets: install-packages
+# Input:   LISP_SOURCES CLISP_SOURCES CMUCL_SOURCES SBCL_SOURCES EMACS_SOURCES 
+# Output:  $(PACKAGES)/$(PACKAGE_PATH)/*
+
+install-packages :: $(LISP_SOURCES) $(LISP_OBJECTS)     \
+					$(EMACS_SOURCES) $(CLISP_SOURCES)    \
+	    			$(CMUCL_SOURCES) $(SBCL_SOURCES)
+	@ echo $(LINE3)
+	@ echo "Installing packages: $(LISP_SOURCES) $(EMACS_SOURCES) $(CLISP_SOURCES) $(CMUCL_SOURCES) $(SBCL_SOURCES)" | fmt
+	$(TRACE) umask 022 ;\
+	for f in 	$(LISP_SOURCES) $(LISP_OBJECTS)     \
+				$(EMACS_SOURCES) $(CLISP_SOURCES)    \
+	    		$(CMUCL_SOURCES) $(SBCL_SOURCES) ; do \
+		install -v -D -p -m 644 $$f $(PACKAGES)/$(PACKAGE_PATH)/$$f ;\
+	done
+	@ echo $(LINE4)
+
+
+# ------------------------------------------------------------------------
+# Cleaning:
+
+clean::
+	-rm -f $(LISP_OBJECT_SUFFIXES:%=*%)
+
+cleanall:: 
+	$(TRACE) for p in $(LISP_PROGRAMS) $(CLISP_PROGRAMS) $(SBCL_PROGRAMS) \
+			  $(CMUCL_PROGRAMS) $(EMACS_PROGRAMS) NONE ; do \
+		[ "$$p" = NONE ] || $(MAKE) $(MFLAGS) $${p}-clean PGMNAME=$$p ;\
+	done
+
+$(PGMNAME)-clean ::
+	-rm -rf $(PGMNAME)-clisp $(PGMNAME)-sbcl $(PGMNAME)-cmucl $(PGMNAME)-emacs
+
+
+# ------------------------------------------------------------------------
+# Dependencies
+
+MAKEDEPEND=$(COMMON)/common-lisp/make-depends.sh
+MAKEDEPEND_FAS=$(COMMON)/common-lisp/make-depends.fas
+Makefile.depend::$(MAKEDEPEND) $(MAKEDEPEND_FAS) $(LISP_SOURCES) \
+		$(EMACS_SOURCES) $(CLISP_SOURCES) $(CMUCL_SOURCES) $(SBCL_SOURCES)
+	@ echo "Generating $@"
+	@ echo Makefile.depend: $(MAKEDEPEND) $(MAKEDEPEND_FAS) $(LISP_SOURCES) \
+		$(EMACS_SOURCES) $(CLISP_SOURCES) $(CMUCL_SOURCES) $(SBCL_SOURCES)
+	$(TRACE) echo '# -*- mode: makefile -*-' > Makefile.depend
+	$(TRACE) $(MAKEDEPEND) -t $(LISP_OBJECTS)  >> Makefile.depend
+	$(TRACE) grep -A 1 '#!!!' < Makefile.depend || true
+
+
+# ------------------------------------------------------------------------
+# Incrementing a VERSION at each compilation:
+
+version.lisp::VERSION
+	@ echo "Generating $@"
+	$(TRACE) . VERSION ;\
+	echo ';;; This file is automatically generated by Makefile.'\
+		                                  > version.lisp ;\
+	echo ';;; Please, do not edit it. '  >> version.lisp ;\
+	echo "(DEFCONSTANT +VERSION+ \"$$major.$$minor-$$compilation-$$extension\")"  >> version.lisp ;\
+	echo "Compiling version $$major.$$minor-$$compilation-$$extension..."
+
+
+# ------------------------------------------------------------------------
+# This is for Emacs.
+# Local Variables:
+# indent-tabs-mode: t
+# mode: makefile
+# End:
+
+#### lisp                             --                     --          ####

@@ -1,0 +1,48 @@
+#******************************************************************************
+#FILE:				~/src/common/makedir/MACINTOSH
+#LANGUAGE:			make
+#SYSTEM:			UNIX
+#USER-INTERFACE:	None
+#DESCRIPTION
+#	This file defines machine dependant variables to make programs on
+#	queen.pjb.fr (MACH/NeXTstep 3.0), compiling with Macintosh includes.
+#AUTHORS
+#	<PJB> Pascal J. Bourguignon
+#MODIFICATIONS
+#	1992/09/28 <PJB> Creation.
+#	1993/05/02 <PJB> Moved -Wall from ~/src/common/makedir/module
+#	1993/09/26 <PJB> Moved support for C++ in here. 
+#LEGAL
+#	Copyright Pascal J. Bourguignon 1992 - 1993
+#	All right reserved
+#	This program may not be included in any commercial product without the 
+#	author written permission. It may be used freely for any non-commercial 
+#	purpose, provided that this header is always included.
+#******************************************************************************
+
+TARGET				=	MACINTOSH
+TARGET_INCLUDES		=	/local/macintosh/mpw/Interfaces/CIncludes
+TARGET_LIBRARIES	=	
+CFLAGS				=	-g -DMacintosh -Wall
+CPLUSFLAGS			=	-g -DMacintosh -Wall
+CC					=	/bin/cc
+CCPLUS				=	/bin/cc++
+CCMAKEDEPENDS		=	$(CC)     -M $(INCLUDES)
+CCPLUSMAKEDEPENDS	=	$(CCPLUS) -M $(INCLUDES)
+APPLY				=	/usr/ucb/apply
+AR					=	ar
+ARFLAGS				=	cr
+RANLIB				=	ranlib -s
+
+## Support for C++:
+.SUFFIXES : .C .cc .c .m
+.C.o:	; $(CCPLUS) $(CPLUSFLAGS) $(INCLUDES) -c -o $*.o $*.C
+.cc.o:	; $(CCPLUS) $(CPLUSFLAGS) $(INCLUDES) -c -o $*.o $*.cc
+.c.o:	; $(CC)     $(CFLAGS)     $(INCLUDES) -c $<
+.m.o:	; $(CC)     $(CFLAGS)     $(INCLUDES) -c $<
+
+#END MACINTOSH
+# This is for Emacs.
+# Local Variables:
+# indent-tabs-mode: t
+# End:

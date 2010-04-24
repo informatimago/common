@@ -1,0 +1,6 @@
+FirstResponder = {ACTIONS = {}; SUPERCLASS = Object; };
+CheckRIB = {
+    ACTIONS = {"computeKey:" = "computeKey:"; }; 
+    OUTLETS = {messageText = messageText; ribText = ribText; }; 
+    SUPERCLASS = Object; 
+};

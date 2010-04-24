@@ -1,0 +1,226 @@
+ 
+On  veut des objets  permettant d'énumérer  des arrangements,  c'est à
+dire,  par envois successifs  d'un message,  donner chaque  élément de
+l'ensemble  représenté.   Les  objets  à construire  représentent  des
+ensembles, fonctions  d'un autre ensemble fini E.   Ces ensembles sont
+fini  ; mais  il est  possible  qu'il ne  soit pas  réalisable de  les
+énumérer  entièrement  avant la  fin  de  l'univers.   Ceci doit  être
+contrôlé  par les  objets  clients (qui  peuvent  utiliser la  méthode
+cardinal pour ce faire).
+
+
+
+======================================================================
+===  Arrangements avec répétition de n élements parmis N = | E |  ===
+======================================================================
+ 
+ Ensemble à énumérer : F = E ^ n.
+
+Cardinal : | F | = | E ^ n |  =  | E | ^ n
+
+Chaque élément de l'énumération est n­uplet consistant en une suite de
+n éléments de E, éventuellement avec répétition.
+	
+Algorithme : 
+ 		int		choice[n];
+	init:
+		for i in [0,n­1], choice[i]=0, 
+	next:
+		k=n­1;
+		(choice[k])++;
+		while((k>0)&&(choice[k]>=N)){
+			choice[k]=0;
+			k­­;
+			(choice[k])++;
+		}
+	
+	done:
+		for i in [1,n­1] choice[i]=0 AND choice[0]=N
+ 
+
+
+======================================================================
+===   Arrangements sans répétition de n élements parmis N = | E |  ===
+======================================================================
+ 
+Ensemble à énumérer : F = { (e1,...,en) in E, i!=j => ei!=ej }.
+
+Cardinal : | F |  =  A(n,N) = N! / (N­n)! 
+
+Chaque élément de l'énumération   est un n­uplet,  et consiste  en une
+suite de n éléments de E, sans répétition.
+	
+Algorithme :
+        BOOLEAN taken[N];
+		0..N-1  choice[n];
+		0..n-1  k;
+	init:
+		k=0;
+		for all i in 0..N-1, taken[i]=FALSE;
+
+	BLOCK(k):
+		a[k]=0;
+		while(a[k]<N){
+			if(!taken[a[k]]){
+				taken[a[k]]=TRUE;
+				
+				BLOCK(k+1)
+				
+				taken[a[k]]=FALSE;
+			}
+			a[k]++;
+		}
+		done;
+	BLOCK(n):
+		a[0]...a[n-1] est un n-uplet de l'énumération.
+
+	
+	--------------------------------------------------------
+	init:
+		for all i in 0..n-1, a[i]=i; taken[a[i]]=TRUE;	
+		for all i in n..N-1, taken[i]=FALSE;
+		a[0]...a[n-1] est le premier n-uplet de l'énumération.
+	next:
+
+
+
+		k:=n-1;
+		// end fors:
+		taken[a[k]]=FALSE;
+		a[k]++;
+		while((0<k)&&(N<=a[k])){	
+			k--;
+			take[a[k]]=FALSE;
+			a[k]++;
+		}
+		if(N<=a[k]){ // => k==0
+			 done
+		}
+		while((a[k]<N)&&(taken[a[k]])){
+			a[k]++;
+		}
+		// begin fors:
+		while(k<n){
+
+			k++;
+			a[k]=0;
+			if(a[k]<N){
+				taken[a[k]]=TRUE:
+			}else{
+				done
+			}
+		}
+		a[0],...,a[n-1] est un n-uplet de l'énumération.
+	--------------------------------------------------------
+
+									 
+							init     (0,...,0,0,0)
+									 (0,...,0,0,1)
+									 ...
+									 (0,...,0,0,N-1)
+									 (0,...,0,1,0)
+									 (0,...,0,1,1)
+									 ...
+									 (0,...,0,1,N-1)
+									 ...
+									 (N-1,...N-1,0)
+									 (N-1,...N-1,1)
+									 ...
+									 (N-1,...N-1,N-1)    done
+
+Mauvais Algorithme : 
+ 		BOOLEAN	taken[N];
+		int		choice[n];
+	init:
+		for i in [0,n­1], taken[i]=TRUE, choice[i]=i, 
+		for i in [n,N­1], taken[i]=FALSE
+	next:
+		k=n­1;
+		choice[k]=nextchoice(choice[k]);
+		while (k>0) && (choice[k]>=N) {
+			choice[k]=firstchoice(choice[k]);
+			k­­;
+			choice[k]=nextchoice(choice[k]);
+		}
+	
+	done:
+		choice[0]=N ?
+
+
+	int firstchoice(int i)
+	{
+		taken[i]=0;
+		i=0;
+		while((i<N) && (taken[i])){
+			i++;
+		}
+		if((i<N){
+			taken[i]=1;
+		}
+		return(i);
+	}//firstchoice.
+ 
+ 	int nextchoice(int i)
+	{
+		taken[i]=0;
+		i++;
+		while((i<N) && (taken[i])){
+			i++;
+		}
+		if((i<N){
+			taken[i]=1;
+		}
+		return(i);
+	}//nextchoice.
+ 
+
+
+ 
+======================================================================
+===         Combinaisons de n élements parmis N = | E |            ===
+======================================================================
+
+ 
+Ensemble à énumérer : F = ensemble des parties de E contenant n éléments.
+
+Cardinal : | F |  =  C(n,N) = A(n,N) / n! = N! / (n! (N­n)!)
+
+Chaque élément de  l'énumération  est un  n­uplet,  et consiste en  un
+sous­ensemble de n éléments de E.
+
+Algorithme : 
+ 		int	choice[n];
+	init:
+		for i in [0..n­1] choice[i]=i;
+	next:
+		f(choice,n­1);
+	
+	f(choice,i)
+	{
+		(choice[i])++;
+		if(choice[i]>=N­(n­1)+i){
+			if(i>0){
+				f(choice,i­1);
+				choice[i]=choice[i­1]+1;
+			}else{
+				// done
+			}
+		}
+	}
+
+	done:
+		choice[0]=N­n­1
+		
+ 
+
+ Interface0 
+ 
+int N = E.cardinal
+int n ; 
+int cardinal(void);	// cardinal de l'ensemble des arrangements (ou combinaisons)
+void reset(void);	// réinitialise l'énumération.
+BOOLEAN getCurrentElement(int* choice); // return the new current element and return done().
+BOOLEAN getNextElement(int* choice); // increment the enumeration, return the new current element and return done().
+BOOLEAN done(void);	// whether all elements have been enumerated.
+
+Voir: si on travaille uniquement avec des entiers et des tableaux d'entiers, ou si on travaille avec des objets.

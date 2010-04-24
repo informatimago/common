@@ -1,0 +1,121 @@
+#******************************************************************************
+#FILE:				$(MAKEDIR)/library_template_makefile
+#LANGUAGE:			make
+#SYSTEM:			UNIX
+#USER-INTERFACE:	None
+#DESCRIPTION
+#	This is an Makefile template for a library subdirectory.
+#
+#	This Makefile uses the following environment variables:
+#
+#	Input variables are:
+#
+#       $(MAKEDIR)      where the makefiles are located.
+#
+#       $(PREFIX)   where the libraries are installed.
+#                       It will be created a subdirectory in this 
+#                       $(PREFIX) for each library compiled by 
+#                       this makefile.
+#
+#       $(TARGET)       the name of the platform on which we're compiling.
+#                       This is just used to include platform specific
+#                       makefile rules.
+#
+#		$(MODULE)		the name of this module.
+#
+#	Output:
+#
+#		$(PREFIX)/$(MODULE)/interfaces/    the interface of the module,
+#		$(PREFIX)/$(MODULE)/documentation/ the documentation of the module,
+#		$(PREFIX)/$(MODULE)/libraries/     the libraries of the module.
+#
+#AUTHORS
+#	<PJB> Pascal J. Bourguignon
+#MODIFICATIONS
+#	1993-03-16 <PJB> Creation.
+#	1993-09-26 <PJB> Made library_template_Makefile and 
+#					 program_template_Makefile from 
+#					 previous Makefile_example file.
+#   2001-06-19 <PJB> Reorganized & simplified.
+#LEGAL
+#	Copyright Pascal J. Bourguignon 1993 - 2001
+#
+#   This script is free software; you can redistribute it and/or
+#   modify it under the terms of the GNU  General Public
+#   License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+#
+#   This script is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#   General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public
+#   License along with this library; see the file COPYING.LIB.
+#   If not, write to the Free Software Foundation,
+#   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#******************************************************************************
+
+INTERFACES=
+DOCUMENTATION=
+CSOURCES=
+CPLUSSOURCES=	
+OBJECTS=$(CSOURCES:.c=.o) $(CPLUSSOURCES:.c=.o)
+INCLUDES=\
+	-I. \
+	-I../interfaces \
+	-I$(PREFIX)/lib \
+	-I$(PREFIX)/lib/bolib/interfaces \
+	-I$(PREFIX)/lib/bplib/interfaces \
+	-I$(PREFIX)/lib/bclib/interfaces \
+	$(TARGET_INCLUDES)
+
+
+include $(MAKEDIR)/library
+-include Makefile.depend
+
+# For $(MAKEDIR)/library :
+#	Input variables are:
+#
+#       $(MAKEDIR)      where the makefiles are located.
+#
+#       $(PREFIX)   where the libraries are installed.
+#                       It will be created a subdirectory in this 
+#                       $(PREFIX) for each library compiled by 
+#                       this makefile.
+#
+#       $(TARGET)       the name of the platform on which we're compiling.
+#                       This is just used to include platform specific
+#                       makefile rules.
+#
+#		$(MODULE)		the name of this library.
+#
+#       $(INTERFACES)   the list of interfaces in ../interfaces/ that must be
+#                       installed.
+#
+#       $(DOCUMENTATION) the list of documentation files in ../documentation/
+#                       that must be installed.
+#
+#		$(CSOURCES)		the list of C sources in ../sources/.
+#
+#		$(CPLUSSOURCES)	the list of C++ sources in ../sources/.
+#
+#		$(OBJECTS)		the list of .o files to be inserted into the library.
+#
+#		$(INCLUDES)		the list of includes -I options to compile the module.
+#
+#	Output:
+#
+#		$(PREFIX)/$(MODULE)/interfaces/    the interface of the module,
+#		$(PREFIX)/$(MODULE)/documentation/ the documentation of the module,
+#		$(PREFIX)/$(MODULE)/libraries/     the libraries of the module.
+#       $(PREFIX)/$(MODULE)/libraries/lib$(MODULE).a    
+#                                   where The module library will be installed.
+
+#END Makefile## This is for Emacs.
+# Local Variables:
+# indent-tabs-mode: t
+# mode: makefile
+# End:
+
+#### library_template_makefile        -- 2003-12-01 00:05:22 -- pascal   ####

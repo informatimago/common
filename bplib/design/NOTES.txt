@@ -1,0 +1,3 @@
+BpClass:
+	SEE the BpClass_PLUG_ABSTRACT macro and the consequences of having a NIL factory.
+	

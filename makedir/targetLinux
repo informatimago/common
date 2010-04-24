@@ -1,0 +1,105 @@
+#******************************************************************************
+#FILE:				$(MAKEDIR)/targetLinux
+#LANGUAGE:			make
+#SYSTEM:			UNIX
+#USER-INTERFACE:	None
+#DESCRIPTION
+#	This file defines machine dependant variables to make programs on
+#	Linux.
+#AUTHORS
+#	<PJB> Pascal J. Bourguignon
+#MODIFICATIONS
+#	1992/09/28 <PJB> Creation.
+#	1993/05/02 <PJB> Moved -Wall from ~/src/common/makedir/module
+#	1993/09/26 <PJB> Moved support for C++ in here. 
+#					 Renamed file NeXT (from QUEEN).
+#	1993/09/26 <PJB> Added support for Modula-2.
+#	1998/10/23 <PJB> Adapted to LINUX.
+#LEGAL
+#	Copyright Pascal J. Bourguignon 1992 - 1998
+#	All right reserved
+#	This program may not be included in any commercial product without the 
+#	author written permission. It may be used freely for any non-commercial 
+#	purpose, provided that this header is always included.
+#******************************************************************************
+
+# On Linux i586, gcc/g++ define: 
+#	__GNUC__	__GNUC_MINOR__	__ELF__
+#	unix		__unix			__unix__
+#	linux		__linux			__linux__
+#	i386		__i386			__i386__
+
+include $(MAKEDIR)/warnings
+
+TARGET				=	Linux
+TARGET_INCLUDES		=	
+TARGET_LIBRARIES	=	
+TARGET_COMMON_FLAGS =   -O -g -pipe -D$(TARGET) -DUNIX $(WARNINGS)
+TARGET_CFLAGS		=	$(TARGET_COMMON_FLAGS) $(C_WARNINGS)
+TARGET_OBJCFLAGS	=	$(TARGET_COMMON_FLAGS) $(OBJC_WARNINGS)
+TARGET_CPLUSFLAGS	=	$(TARGET_COMMON_FLAGS) $(CPLUS_WARNINGS)
+TARGET_LDFLAGS      =   -lm 
+
+APPLY				=	apply
+AR					=	ar
+ARFLAGS				=	cr
+RANLIB				=	ranlib
+RANLIBFLAGS         =   
+
+
+## Linking:
+LDFLAGS             = $(TARGET_LDFLAGS)
+LD                  = $(CC)
+# LD depends on the languages and compilers used.
+
+
+
+## Support for C:
+CC					=	/usr/bin/gcc
+CFLAGS				=	$(TARGET_CFLAGS)
+CCMAKEDEPENDS		=	$(CC) -M $(INCLUDES)
+.SUFFIXES:: .o .c
+%.o : %.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $<
+% : %.c
+	$(CC) $(CFLAGS) $(INCLUDES) $< $(LDFLAGS) $(LIBRARIES) -o $@
+
+## Support for Objective-C:
+OBJC				=	/usr/bin/gcc -x objective-c
+OBJCFLAGS			=	$(TARGET_OBJCFLAGS)
+OBJCMAKEDEPENDS		=	$(OBJC) -M $(INCLUDES)
+.SUFFIXES:: .o .m
+%.o : %.m
+	$(OBJC) $(OBJCFLAGS) $(INCLUDES) -c $<
+% : %.m
+	$(OBJC) $(OBJCFLAGS) $(INCLUDES) $< $(LDFLAGS) $(LIBRARIES) -o $@
+
+## Support for C++:
+CCPLUS				=	/usr/bin/g++
+CPLUSFLAGS			=	$(TARGET_CPLUSFLAGS)
+CCPLUSMAKEDEPENDS	=	$(CCPLUS) -M $(INCLUDES)
+.SUFFIXES:: .o .cc 
+%.o : %.cc
+	$(CCPLUS) $(CPLUSFLAGS) $(INCLUDES) -c -o $*.o $<
+% : %.cc
+	$(CCPLUS) $(CPLUSFLAGS) $(INCLUDES) $< $(LDFLAGS) $(LIBRARIES) -o $@
+
+## Support for JS-Modula-2:
+#MM2					=	/local/languages/jsm2/bin/modula2
+#M2FLAGS				=
+#MM2MAKEDEPENDS		=	echo m2depend
+#.SUFFIXES:: .h .o .md .mi
+#.md.h:	; $(MM2) $(M2FLAGS) -O../interfaces $(INCLUDES) $<
+#.mi.o:	; $(MM2) $(M2FLAGS) $(INCLUDES) $<
+
+
+
+
+
+# This is for Emacs.
+# Local Variables:
+# indent-tabs-mode: t
+# mode: makefile
+# End:
+
+#### targetLinux                      -- 2004-01-01 06:08:55 -- pascal   ####

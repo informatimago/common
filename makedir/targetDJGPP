@@ -1,0 +1,64 @@
+#******************************************************************************
+#FILE:				~/src/common/makedir/DJGPP
+#LANGUAGE:			make
+#SYSTEM:			UNIX
+#USER-INTERFACE:	None
+#DESCRIPTION
+#	This file defines environment dependant variables to make programs
+#	with DJGPP on NeXT for MSDOS.
+#AUTHORS
+#	<PJB> Pascal J. Bourguignon
+#MODIFICATIONS
+#	1992/09/28 <PJB> Creation.
+#	1993/05/02 <PJB> Moved -Wall from ~/src/common/makedir/module
+#	1993/09/26 <PJB> Moved support for C++ in here. 
+#					 Renamed file DJGPP (from QUEEN).
+#	1993/09/26 <PJB> Added support for Modula-2.
+#	1995/11/17 <PJB> Adapted to support DJGPP.
+#LEGAL
+#	Copyright Pascal J. Bourguignon 1992 - 1995
+#	All right reserved
+#	This program may not be included in any commercial product without the 
+#	author written permission. It may be used freely for any non-commercial 
+#	purpose, provided that this header is always included.
+#******************************************************************************
+
+TARGET				=	DJGPP
+TARGET_INCLUDES		=	-I$(DJGPP)/include/ -I$(DJGPP)/cplusinc
+TARGET_LIBRARIES	=	
+TARGET_CFLAGS		=	-B$(DJGPP)/bin/ -O -g -DDJGPP -DMSDOS -Wall -pipe
+TARGET_CPLUSFLAGS	=	-B$(DJGPP)/bin/ -O -g -DDJGPP -DMSDOS -Wall -pipe
+TARGET_LDFLAGS      =   -nostartfiles $(DJGPP)/lib/crt0.o -L$(DJGPP)/lib/ \
+						-lpc -lm
+
+APPLY				=	/usr/ucb/apply
+AR					=	$(DJGPP)/bin/ar
+ARFLAGS				=	cr
+RANLIB				=	$(DJGPP)/bin/ranlib -s
+
+## Support for C / Objective-C:
+CC					=	$(DJGPP)/bin/gcc
+CFLAGS				=	$(TARGET_CFLAGS)
+CCMAKEDEPENDS		=	$(CC) -M $(INCLUDES)
+.SUFFIXES:: .o .h .c .m 
+.c.o:	; $(CC) $(CFLAGS) $(INCLUDES) -c $<
+.m.o:	; $(CC) $(CFLAGS) $(INCLUDES) -c $<
+
+## Support for C++:
+CCPLUS				=	$(DJGPP)/bin/cpp
+CPLUSFLAGS			=	$(TARGET_CPLUSFLAGS)
+CCPLUSMAKEDEPENDS	=	$(CCPLUS) -M $(INCLUDES)
+.SUFFIXES:: .o .hh .cc .C
+.C.o:	; $(CCPLUS) $(CPLUSFLAGS) $(INCLUDES) -c -o $*.o $<
+.cc.o:	; $(CCPLUS) $(CPLUSFLAGS) $(INCLUDES) -c -o $*.o $<
+
+
+COFF2EXE=$(DJGPP)/bin/coff2exe
+
+
+#END DJGPP
+# This is for Emacs.
+# Local Variables:
+# indent-tabs-mode: t
+# mode: makefile
+# End:

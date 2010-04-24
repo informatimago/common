@@ -1,0 +1,170 @@
+{\rtf0\ansi{\fonttbl\f2\fswiss Helvetica;\f1\fmodern Courier;\f5\ftech Symbol;}
+\paperw9840
+\paperh11340
+\margl120
+\margr120
+\pard\tx520\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\f2\b0\i0\ulnone\fs24\fc0\cf0 \
+On veut des objets permettant d'›num›rer des arrangements, c'est ’ dire, par envois successifs d'un message, donner chaque ›l›ment de l'ensemble repr›sent›. Les objets ’ construire repr›sentent des ensembles, fonctions d'un autre ensemble fini E. Ces ensembles sont sont fini ; mais il est possible qu'il ne soit pas r›alisable de les ›num›rer enti‹rement avant la fin de l'univers. Ceci doit ﬁtre contrÓl› par les objets clients (qui peuvent utiliser la m›thode 
+\f1 cardinal
+\f2  pour ce faire).\
+\
+\
+\
+\
+
+\b Arrangements avec r›p›tition de n ›lements parmis N = | E |\
+
+\b0 \
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\fi-20\li720\fc0\cf0 Ensemble ’ ›num›r› : F = E ^ n.\
+\
+Cardinal : | F | = | E ^ n |  =  | E | ^ n\
+\
+Chaque ›l›ment de l'›num›ration est n-uplet consistant en une suite de n ›l›ments de E, ›ventuellement avec r›p›tition.\
+
+	\
+Algorithme : \
+
+\f1\fs20 		int		choice[n];\
+	init:\
+		for i in [0,n-1], choice[i]=0, \
+	next:\
+		k=n-1;\
+		(choice[k])++;\
+		while((k>0)&&(choice[k]>=N))\{\
+			choice[k]=0;\
+			k--;\
+			(choice[k])++;\
+		\}\
+	\
+	done:\
+		for i in [1,n-1] choice[i]=0 AND choice[0]=N\
+
+\f2\fs24 \
+\
+\
+
+\pard\tx520\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\b\fc0\cf0 Arrangements sans r›p›tition de n ›lements parmis N = | E |\
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\fi-20\li720\fc0\cf0 \
+
+\b0 Ensemble ’ ›num›r› : F = \{ (e1,...,en) 
+\f5 Œ
+\f2  E, i 
+\f5 π
+\f2  j 
+\f5 ﬁ
+\f2  ei 
+\f5 π
+\f2  ej \}.\
+\
+Cardinal : | F |  =  A(n,N) = N! / (N-n)! \
+\
+Chaque ›l›ment de l'›num›ration est un n-uplet, et consiste en une suite de n ›l›ments de E, sans r›p›tition.\
+	\
+Algorithme : \
+
+\f1\fs20 		BOOLEAN	taken[N];\
+		int		choice[n];\
+	init:\
+		for i in [0,n-1], taken[i]=TRUE, choice[i]=i, \
+		for i in [n,N-1], taken[i]=FALSE\
+	next:\
+		k=n-1;\
+		choice[k]=nextchoice(choice[k]);\
+		while (k>0) && (choice[k]>=N) \{\
+			choice[k]=firstchoice(choice[k]);\
+			k--;\
+			choice[k]=nextchoice(choice[k]);\
+		\}\
+	\
+	done:\
+		choice[0]=N ?\
+\
+\
+	int firstchoice(int i)\
+	\{\
+		taken[i]=0;\
+		i=0;\
+		while((i<N) && (taken[i]))\{\
+			i++;\
+		\}\
+		if((i<N)\{\
+			taken[i]=1;\
+		\}\
+		return(i);\
+	\}//firstchoice.\
+
+\f2\fs24 \
+
+\f1\fs20 	int nextchoice(int i)\
+	\{\
+		taken[i]=0;\
+		i++;\
+		while((i<N) && (taken[i]))\{\
+			i++;\
+		\}\
+		if((i<N)\{\
+			taken[i]=1;\
+		\}\
+		return(i);\
+	\}//nextchoice.\
+
+\f2\fs24 \
+
+\b \
+
+\pard\tx520\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\fc0\cf0 Combinaisons de n ›lements parmis N = | E |\
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\fi-20\li720\fc0\cf0 \
+
+\b0 Ensemble ’ ›num›r› : F = ensemble des parties de E contenant n ›l›ments.\
+\
+Cardinal : | F |  =  C(n,N) = A(n,N) / n! = N! / (n! (N-n)!)\
+\
+Chaque ›l›ment de l'›num›ration est un n-uplet, et consiste en un sous-ensemble de n ›l›ments de E.\
+\
+Algorithme : \
+
+\f1\fs20 		int	choice[n];\
+	init:\
+		for i in [0..n-1] choice[i]=i;\
+	next:\
+		f(choice,n-1);\
+	\
+	f(choice,i)\
+	\{\
+		(choice[i])++;\
+		if(choice[i]>=N-(n-1)+i)\{\
+			if(i>0)\{\
+				f(choice,i-1);\
+				choice[i]=choice[i-1]+1;\
+			\}else\{\
+				// done\
+			\}\
+		\}\
+	\}\
+\
+	done:\
+		choice[0]=N-n-1\
+		\
+
+\f2\b\fs24 \
+\
+
+\pard\tx520\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\fc0\cf0 Interface
+\b0 \
+
+\pard\tx1060\tx1600\tx2120\tx2660\tx3200\tx3720\tx4260\tx4800\tx5320\fi-20\li720\fc0\cf0 \
+int N = E.cardinal\
+int n ; \
+int cardinal(void);	// cardinal de l'ensemble des arrangements (ou combinaisons)\
+void reset(void);	// r›initialise l'›num›ration.\
+BOOLEAN getCurrentElement(int* choice); // return the new current element and return done().\
+BOOLEAN getNextElement(int* choice); // increment the enumeration, return the new current element and return done().\
+BOOLEAN done(void);	// whether all elements have been enumerated.\
+
+\
+Voir: si on travaille uniquement avec des entiers et des tableaux d'entiers, ou si on travaille avec des objets.\
+
+}
