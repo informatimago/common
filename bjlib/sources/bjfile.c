@@ -18,7 +18,7 @@ BUGS
 LEGAL
     GPL
     
-    Copyright Pascal J. Bourguignon 2000 - 2001
+    Copyright Pascal J. Bourguignon 2000 - 2011
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
@@ -80,7 +80,7 @@ LEGAL
         if((that==0)||(that->error!=0)){
             return(-1);
         }else{
-            return(that->statistics.st_size);
+            return((int)(that->statistics.st_size));
         }
     }/*bjfile_size*/
 
@@ -114,7 +114,7 @@ LEGAL
         if(errno!=0){
             return(0);
         }else{
-            path->length=strlen(path->data);
+            path->length=(unsigned int)strlen(path->data);
             return(path);
         }
     }/*bjfile_current_directory_path*/

@@ -32,7 +32,7 @@ MODIFICATIONS
     
     1995-10-18 <PJB> Creation.
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 2002
+    Copyright Pascal J. Bourguignon 1992 - 2011
 
     This file is part of the bplib library..
 

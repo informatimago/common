@@ -33,7 +33,7 @@ MODIFICATIONS
     
     1995-11-19 <PJB> Creation. 
 LEGAL
-    Copyright Pascal J. Bourguignon 1995 - 2002
+    Copyright Pascal J. Bourguignon 1995 - 2011
 
     This file is part of the bplib library..
 
@@ -56,173 +56,177 @@ LEGAL
 #include BpClass_hh
 #include BcImplementation_h
 
-    static const char rcsid[]="$Id";
+static const char rcsid[]="$Id";
     
 // birth and death:
 
-    /*
-        The instances must retain their isa BpClass.
-        The BpClasses retains their superclass and their factory.
-        As a instance, the factories retain their isa BpClass. This set
-        up a loop in the retain dependancy that prevent the BpClasses to 
-        be freed. This is intentional.      
-    */
+/*
+  The instances must retain their isa BpClass.
+  The BpClasses retains their superclass and their factory.
+  As a instance, the factories retain their isa BpClass. This set
+  up a loop in the retain dependancy that prevent the BpClasses to 
+  be freed. This is intentional.      
+*/
     
-    static BpClass* BpClassClass=NIL;
+static BpClass* BpClassClass=NIL;
     
-    FRIENDPROC(BpClass_CreateMetaClasses,(void),BpClass*)
-    {
-            BpClass*        objectClass;
+PROCEDURE(BpClass_CreateMetaClasses,(void),BpClass*)
+{
+    BpClass*        objectClass;
 
-        objectClass=NEW(BpClass);
-        BpClassClass=NEW(BpClass);
+    objectClass=NEW(BpClass);
+    BpClassClass=NEW(BpClass);
         
-        if(objectClass->isa!=NIL){  // this should not happen.
-            objectClass->isa->release();
-        }
-        objectClass->isa=BpClassClass;
-        objectClass->isa->retain();
-        objectClass->superClassSet(objectClass);
+    if(objectClass->isa!=NIL){  // this should not happen.
+        objectClass->isa->release();
+    }
+    objectClass->isa=BpClassClass;
+    objectClass->isa->retain();
+    objectClass->superClassSet(objectClass);
         
-        if(BpClassClass->isa!=NIL){ // this should not happen.
-            BpClassClass->isa->release();
-        }
-        BpClassClass->isa=BpClassClass;     
-        BpClassClass->isa->retain();
-        BpClassClass->superClassSet(objectClass);
+    if(BpClassClass->isa!=NIL){ // this should not happen.
+        BpClassClass->isa->release();
+    }
+    BpClassClass->isa=BpClassClass;     
+    BpClassClass->isa->retain();
+    BpClassClass->superClassSet(objectClass);
         
-        BpClassClass->nameSet("BpClass");
-        BpClassClass->factorySet(BpClassClass);
+    BpClassClass->nameSet("BpClass");
+    BpClassClass->factorySet(BpClassClass);
         
-        return(objectClass);
-    }//BpClass_CreateMetaClasses;
+    return(objectClass);
+}//BpClass_CreateMetaClasses;
+
+CLASSMETHOD(BpClass,createMetaClasses,(void),BpClass*)
+{
+    return(BpClass_CreateMetaClasses());
+}
+
+CONSTRUCTOR(BpClass)
+{
+    // No BpClass_PLUG here: it's done by BpClass_CreateMetaClasses,
+    // called by BpObject constructor.
+    if((isa!=NIL)&&(isa!=(BpClass*)1)){
+        isa->release();
+    }
+    isa=BpClassClass;
+    if(isa!=NIL){
+        isa->retain();
+    }
+    fName=NIL;
+    fSuperClass=NIL;
+    fFactory=NIL;
+}//BpClass;
+        
+    
+DESTRUCTOR(BpClass)
+{
+    if(fFactory!=NIL){
+        fFactory->release();
+    }
+    if(fSuperClass!=NIL){
+        fSuperClass->release();
+    }
+}//~BpClass;
 
 
-    CONSTRUCTOR(BpClass)
-    {
-        // No BpClass_PLUG here: it's done by BpClass_CreateMetaClasses,
-        // called by BpObject constructor.
-        if((isa!=NIL)&&(isa!=(BpClass*)1)){
-            isa->release();
-        }
-        isa=BpClassClass;
-        if(isa!=NIL){
-            isa->retain();
-        }
-        fName=NIL;
-        fSuperClass=NIL;
-        fFactory=NIL;
-    }//BpClass;
-        
-    
-    DESTRUCTOR(BpClass)
-    {
-        if(fFactory!=NIL){
-            fFactory->release();
-        }
-        if(fSuperClass!=NIL){
-            fSuperClass->release();
-        }
-    }//~BpClass;
-
-
-    METHOD(BpClass,nameSet,(const char* nName),void)
-    {
-        fName=nName;
-    }//nameSet;
+METHOD(BpClass,nameSet,(const char* nName),void)
+{
+    fName=nName;
+}//nameSet;
     
     
-    METHOD(BpClass,superClassSet,(BpClass* nSuper),void)
-    {
-        if(fSuperClass!=NIL){
-            fSuperClass->release();
-        }
-        fSuperClass=nSuper;
-        fSuperClass->retain();
-    }//superClassSet;
+METHOD(BpClass,superClassSet,(BpClass* nSuper),void)
+{
+    if(fSuperClass!=NIL){
+        fSuperClass->release();
+    }
+    fSuperClass=nSuper;
+    fSuperClass->retain();
+}//superClassSet;
     
     
-    METHOD(BpClass,factorySet,(BpObject* nFactory),void)
-    {
-        if(fFactory!=NIL){
-            fFactory->release();
-        }
-        fFactory=nFactory;
-        fFactory->retain();
-    }//factorySet;
+METHOD(BpClass,factorySet,(BpObject* nFactory),void)
+{
+    if(fFactory!=NIL){
+        fFactory->release();
+    }
+    fFactory=nFactory;
+    fFactory->retain();
+}//factorySet;
     
     
 // override of BpObject methods:
 
-    METHOD(BpClass,makeBrother,(void),BpObject*)
-    {
-        return(NEW(BpClass));
-    }//makeBrother;
+METHOD(BpClass,makeBrother,(void),BpObject*)
+{
+    return(NEW(BpClass));
+}//makeBrother;
     
     
-    METHOD(BpClass,printOnLevel,(FILE* file,CARD32 level),void)
-    {
-        BpClass_SUPER::printOnLevel(file,level);
-        PRINTONLEVEL(file,level,"%s",fName,fName);
-        PRINTONLEVEL(file,level,"%p",fSuperClass,fSuperClass);
-        PRINTONLEVEL(file,level,"%p",fFactory,fFactory);
-    }//printOnLevel;
+METHOD(BpClass,printOnLevel,(FILE* file,CARD32 level),void)
+{
+    BpClass_SUPER::printOnLevel(file,level);
+    PRINTONLEVEL(file,level,"%s",fName,fName);
+    PRINTONLEVEL(file,level,"%p",fSuperClass,fSuperClass);
+    PRINTONLEVEL(file,level,"%p",fFactory,fFactory);
+}//printOnLevel;
 
     
 // BpClass methods:
 
-    METHOD(BpClass,name,(void),const char*)
-    {
-        return(fName);
-    }//name;
+METHOD(BpClass,name,(void),const char*)
+{
+    return(fName);
+}//name;
     
     
-    METHOD(BpClass,superClass,(void),BpClass*)
-    {
-        if(fSuperClass==NIL){
-            return(this);
-        }else{
-            return(fSuperClass);
-        }
-    }//superClass;
-    
-
-    METHOD(BpClass,factory,(void),BpObject*)
-    {
-        return(fFactory);
-    }//factory;
-    
-    
-    METHOD(BpClass,makeInstance,(void),BpObject*)
-    {
-        return(fFactory->makeBrother());
-    }//makeInstance;
+METHOD(BpClass,superClass,(void),BpClass*)
+{
+    if(fSuperClass==NIL){
+        return(this);
+    }else{
+        return(fSuperClass);
+    }
+}//superClass;
     
 
-    METHOD(BpClass,isSubClassOf,(BpClass* aClass),BOOLEAN)
-    {
-            BpClass*    current;
-            BpClass*    next;
+METHOD(BpClass,factory,(void),BpObject*)
+{
+    return(fFactory);
+}//factory;
+    
+    
+METHOD(BpClass,makeInstance,(void),BpObject*)
+{
+    return(fFactory->makeBrother());
+}//makeInstance;
+    
 
-        current=this;
+METHOD(BpClass,isSubClassOf,(BpClass* aClass),BOOLEAN)
+{
+    BpClass*    current;
+    BpClass*    next;
+
+    current=this;
+    next=current->superClass();
+    while((current!=next)&&(current!=aClass)){
+        current=next;
         next=current->superClass();
-        while((current!=next)&&(current!=aClass)){
-            current=next;
-            next=current->superClass();
-        }
-        return(current==aClass);
-    }//isSubClassOf;
+    }
+    return(current==aClass);
+}//isSubClassOf;
     
     
     
-    PROCEDURE(BpClass_classNamed,(const char* className),BpClass*)
-    {
-        // SEE: BpClass_classNamed is not implemented.
-        /*
-            We should use our own hashtable.
-        */
-        return(NIL);
-    }//BpClass_classNamed;
+PROCEDURE(BpClass_classNamed,(const char* className),BpClass*)
+{
+    // SEE: BpClass_classNamed is not implemented.
+    /*
+      We should use our own hashtable.
+    */
+    return(NIL);
+}//BpClass_classNamed;
     
     
 //END BpClass.

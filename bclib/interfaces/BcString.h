@@ -31,7 +31,7 @@ MODIFICATIONS
     1994-10-08 <PJB> Translated from C++ to C.
     1994-10-09 <PJB> Added AppendString.
 LEGAL
-    Copyright Pascal J. Bourguignon 1993 - 2002
+    Copyright Pascal J. Bourguignon 1993 - 2011
 
     This file is part of the bclib library.
 

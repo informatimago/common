@@ -28,7 +28,7 @@ BUGS
     The semantics of this implementation is not *exactly* the same as those
     of NeXTstep implementation. This should not be a problem for dumb use. 
 LEGAL
-    Copyright Pascal J. Bourguignon 1993 - 2002
+    Copyright Pascal J. Bourguignon 1993 - 2011
 
     This file is part of the bclib library.
 

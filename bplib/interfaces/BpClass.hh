@@ -38,7 +38,7 @@ MODIFICATIONS
     
     1995-11-19 <PJB> Creation. 
 LEGAL
-    Copyright Pascal J. Bourguignon 1995 - 2002
+    Copyright Pascal J. Bourguignon 1995 - 2011
 
     This file is part of the bplib library..
 
@@ -97,13 +97,14 @@ public:
             NOTE:       to test direct superClass use:
                             (aClass==this->superClass())
         */
-    
+    CLASSMETHOD(BpClass,createMetaClasses,(void),BpClass*)
 protected:
     const char*     fName;
     BpClass*        fSuperClass;
     BpObject*       fFactory;
     FRIENDPROC(BpClass_CreateMetaClasses,(void),BpClass*)
 };
+
 
 
 /*

@@ -29,7 +29,7 @@ LEGAL
         Application Kit,Release 2.0
         Copyright (c) 1988,1989,1990,NeXT,Inc.  All rights reserved.
 
-    Copyright Pascal J. Bourguignon 1993 - 2002
+    Copyright Pascal J. Bourguignon 1993 - 2011
 
     This file is part of the bclib library.
 

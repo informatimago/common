@@ -23,7 +23,7 @@ AUTHORS
 MODIFICATIONS
     1992-08-16 <PJB> Creation.
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 2002
+    Copyright Pascal J. Bourguignon 1992 - 2011
 
     This file is part of the bplib library..
 
@@ -72,11 +72,11 @@ LEGAL
 
 
     void PrintOnLevel_elementPrintf(FILE* file,CARD32 level,const char* name,
-            CARD32 index,const char* format,...)
+                                    CARD32 index,const char* format,...)
     {
         va_list parameters;
         va_start(parameters,format);
-        fprintf(file,"%*s%-16s[%4lu]=",asSize(level),"",name,index);
+        fprintf(file,"%*s%-16s[%4"FMT_CARD32"]=",asSize(level),"",name,index);
         vfprintf(file,format,parameters);
         fprintf(file,"\n");
         va_end(parameters);

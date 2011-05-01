@@ -20,7 +20,7 @@ BUGS
 LEGAL
     GPL
     
-    Copyright Pascal J. Bourguignon     1993 - 2001
+    Copyright Pascal J. Bourguignon 1993 - 2011
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
@@ -52,7 +52,7 @@ LEGAL
     bjstring_t*  bjstring_new_from_file(const bjstring_t* path)
     {
         bjstring_t* that;
-        int         size;
+        int size;
         FILE*       file;
         size=bjfile_size(bjfile_new_with_path(path));
         if(size<0){
@@ -64,8 +64,7 @@ LEGAL
         }
         that=bjstring_new();
         bjstring_set_capacity_copy(that,(unsigned)size,no);
-        that->length=fread(that->data,sizeof(*(that->data)),
-                           (unsigned)size,file);
+        that->length=(unsigned int)fread(that->data,sizeof(*(that->data)),(size_t)size,file);
         if (that->length!=0)
             that->data[that->length]='\0';
         fclose(file);
@@ -81,7 +80,7 @@ LEGAL
         if(file==0){
             return(-1);
         }
-        result=fwrite(that->data,sizeof(*(that->data)),that->length,file);
+        result=(int)fwrite(that->data,sizeof(*(that->data)),that->length,file);
         fclose(file);
         return(result);
     }/*bjstring_save_to_file*/
@@ -130,7 +129,7 @@ LEGAL
         }else{
             /* read at least part of the line */
 
-            that->length=strlen(that->data);
+            that->length=(unsigned int)strlen(that->data);
             /*  Note that if the line contains null bytes,
                 it will be truncated and it may be cut if it's longer
                 than the buffer.
@@ -145,17 +144,17 @@ LEGAL
                              (signed)(that->allocation-that->length),input)==0){
                         if(feof(input)){
                             /* end-of-file without end-of-line*/
-                            return(that->length);
+                            return((int)(that->length));
                         }else{
                             /* error */
                             return(-1);
                         }
                     }else{
-                        that->length+=strlen(that->data+that->length);
+                        that->length+=(unsigned int)strlen(that->data+that->length);
                     }
                 }
             }
-            return(that->length);
+            return((int)(that->length));
         }
     }/*bjstring_read_a_line_from_file*/
 

@@ -12,7 +12,7 @@ MODIFICATIONS
     1992/10/22 <PJB> Renamed printOn to printOn.
     1993/03/19 <PJB> Updated to use newly Bc- prefixed interfaces.
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 1992
+    Copyright Pascal J. Bourguignon 1992 - 2011
     All rights reserved.
     This program may not be included in any commercial product without the 
     author written permission. It may be used freely for any non-commercial 

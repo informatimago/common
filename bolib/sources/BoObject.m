@@ -12,7 +12,7 @@ MODIFICATIONS
     1992/10/22 <PJB> Renamed printOn to printOn.
     1993/03/19 <PJB> Updated to use newly Bc- prefixed interfaces.
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 1993
+    Copyright Pascal J. Bourguignon 1992 - 2011
     All rights reserved.
     This program may not be included in any commercial product without the 
     author written permission. It may be used freely for any non-commercial 
@@ -24,12 +24,12 @@ LEGAL
 @interface DeletePool:Object
 {
     BoObject**      pool;
-    long            poolCapacity;
-    long            poolCount;
+    CARD32          poolCapacity;
+    CARD32          poolCount;
 }
     -(id)init;
     -(id)free;
-    -(long)count;
+    -(CARD32)count;
     -(void)addObject:(BoObject*)obj;
     -(void)removeObject:(BoObject*)obj;
     -(void)deleteObjects;
@@ -43,7 +43,7 @@ LEGAL
         [super init];
         poolCount=0;
         poolCapacity=256;
-        pool=(BoObject**)BcMem_Allocate(sizeof(BoObject*)*poolCapacity);
+        pool=(BoObject**)BcMem_Allocate((CARD32)sizeof(BoObject*)*poolCapacity);
         return(self);
     }/*init;*/
     
@@ -57,7 +57,7 @@ LEGAL
     }/*free;*/
     
     
-    -(long)count
+    -(CARD32)count
     {
         return(poolCount);
     }/*count;*/
@@ -70,8 +70,7 @@ LEGAL
                 long            i;
                 
             poolCapacity*=2;
-            newPool=(BoObject**)BcMem_Allocate((sizeof(BoObject*)
-                                        *poolCapacity));
+            newPool=(BoObject**)BcMem_Allocate((CARD32)sizeof(BoObject*)*poolCapacity);
             for(i=0;i<poolCount;i++){
                 newPool[i]=pool[i];
             }

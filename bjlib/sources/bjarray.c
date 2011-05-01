@@ -18,7 +18,7 @@ BUGS
 LEGAL
     GPL
     
-    Copyright Pascal J. Bourguignon     2000 - 2001
+    Copyright Pascal J. Bourguignon 2000 - 2011
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
@@ -80,8 +80,7 @@ LEGAL
         bjarray_t* that=bjobject_new(sizeof(*that),&bjarray_methods);
         that->size=size;
         that->count=0;
-        that->elements=(void**)bjobject_new(
-            sizeof(*(that->elements))*that->size,0);
+        that->elements=(void**)bjobject_new((int)sizeof(*(that->elements))*that->size,0);
         bjobject_retain(that->elements);
         for(i=that->count;i<that->size;i++){
             that->elements[i]=0;
@@ -125,7 +124,7 @@ LEGAL
             minSize=that->size;
         }
         that->size=newSize;
-        elements=(void**)bjobject_new(sizeof(*elements)*that->size,0);
+        elements=(void**)bjobject_new((int)sizeof(*elements)*that->size,0);
         /* We're just transfering the elements[i], no need to release/retain! */
         for(i=0;i<minSize;i++){
             elements[i]=that->elements[i];

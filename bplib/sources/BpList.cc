@@ -52,7 +52,7 @@ MODIFICATIONS
                     in the same sources.
     1994-12-30 <PJB> Added sort.
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 2002
+    Copyright Pascal J. Bourguignon 1992 - 2011
 
     This file is part of the bplib library..
 
@@ -89,7 +89,7 @@ extern "C"{
         BpClass_PLUG(BpList);
         lcount=0;
         lcapacity=BpList_Minimum;
-        elements=(BpObject**)BcMem_Allocate(sizeof(BpObject*)*lcapacity);
+        elements=(BpObject**)BcMem_Allocate((CARD32)sizeof(BpObject*)*lcapacity);
     }//BpList;
 
 
@@ -190,7 +190,7 @@ extern "C"{
         if(lcount>newCapacity){
             BcRAISE(BpList_eCapacityTooLow,(void*)this,(void*)newCapacity);
         }else{
-            newElements=(BpObject**)BcMem_Allocate(sizeof(BpObject*)*newCapacity);
+            newElements=(BpObject**)BcMem_Allocate((CARD32)sizeof(BpObject*)*newCapacity);
             i=0;
             while(i<lcount){
                 newElements[i]=elements[i];

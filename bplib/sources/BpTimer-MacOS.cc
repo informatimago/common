@@ -47,7 +47,7 @@ MODIFICATIONS
                     in the same sources.
     1994-02-05 <PJB> Allowed NIL parameters to start() method.
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 2002
+    Copyright Pascal J. Bourguignon 1992 - 2011
 
     This file is part of the bplib library..
 

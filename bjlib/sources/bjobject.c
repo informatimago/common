@@ -49,7 +49,7 @@ BUGS
 LEGAL
     GPL
     
-    Copyright Pascal J. Bourguignon     1992 - 2001
+    Copyright Pascal J. Bourguignon 1992 - 2011
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
@@ -116,7 +116,7 @@ LEGAL
         that=(bcpurgatory_t*)malloc(sizeof(*that));
         that->count=0;
         that->size=256;
-        that->objects=(bjobject_t**)malloc(sizeof(*(that->objects))*that->size);
+        that->objects=(bjobject_t**)malloc(sizeof(*(that->objects))*(size_t)(that->size));
         return(that);
     }/*bcpurgatory_new*/
 
@@ -144,7 +144,7 @@ LEGAL
             bjobject_t**       objects;
             int                 i;
             that->size*=2;
-            objects=(bjobject_t**)malloc(sizeof(*objects)*that->size);
+            objects=(bjobject_t**)malloc(sizeof(*objects)*(size_t)(that->size));
             for(i=0;i<that->count;i++){
                 objects[i]=that->objects[i];
             }

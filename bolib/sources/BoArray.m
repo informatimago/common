@@ -14,7 +14,7 @@ MODIFICATIONS
     1993/03/19 <PJB> Updated to use newly Bc- prefixed interfaces.
     1996/04/20 <PJB> Updated to use retain/release BoObjects.
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 1996
+    Copyright Pascal J. Bourguignon 1992 - 2011
     All rights reserved.
     This program may not be included in any commercial product without the 
     author written permission. It may be used freely for any non-commercial 
@@ -38,11 +38,11 @@ LEGAL
             CARD32          i;
             
         [super printOn:file];
-        fprintf(file,"size=           %8lu\n",size);
-        fprintf(file,"psize=          %8lu\n",psize);
+        fprintf(file,"size=           %8"FMT_CARD32"\n",size);
+        fprintf(file,"psize=          %8"FMT_CARD32"\n",psize);
         i=0;
         while(i<size){
-            fprintf(file,"[%4lu]=         %p\n",i,(void*)(elements[i]));
+            fprintf(file,"[%4"FMT_CARD32"]=         %p\n",i,(void*)(elements[i]));
             INC(i);
         }
     }/*printOn:;*/
@@ -53,7 +53,7 @@ LEGAL
             CARD32          i;
         
         if(newSize>0){
-            elements=BcMem_Allocate(sizeof(id)*newSize);
+            elements=BcMem_Allocate((CARD32)sizeof(id)*newSize);
             psize=newSize;
             size=newSize;
             i=0;
@@ -92,7 +92,7 @@ LEGAL
             CARD32          i;
             
         if(newSize>psize){
-            newElements=BcMem_Allocate(sizeof(id)*newSize);
+            newElements=BcMem_Allocate((CARD32)sizeof(id)*newSize);
             psize=newSize;
             i=0;
             while(i<size){
@@ -128,7 +128,7 @@ LEGAL
     -(id)objectAt:(CARD32)idx
     {
         if(idx>=size){
-            BcRAISE(BoArray_eBadIndex,(void*)self,(void*)idx);
+            BcRAISE(BoArray_eBadIndex,(void*)self,(void*)(CARDPTR)idx);
         }
         return(elements[idx]);
     }/*objectAt:;*/
@@ -139,7 +139,7 @@ LEGAL
             id          old;
             
         if(idx>=size){
-            BcRAISE(BoArray_eBadIndex,(void*)self,(void*)idx);
+            BcRAISE(BoArray_eBadIndex,(void*)self,(void*)(CARDPTR)idx);
         }
         old=elements[idx];
         elements[idx]=newObject;
@@ -154,7 +154,7 @@ LEGAL
             CARD32              i;
             
         if(idx>=size){
-            BcRAISE(BoArray_eBadIndex,(void*)self,(void*)idx);
+            BcRAISE(BoArray_eBadIndex,(void*)self,(void*)(CARDPTR)idx);
         }
         i=size-1;
         [elements[i] release];
@@ -174,7 +174,7 @@ LEGAL
             id                  old;
             
         if(idx>=size){
-            BcRAISE(BoArray_eBadIndex,(void*)self,(void*)idx);
+            BcRAISE(BoArray_eBadIndex,(void*)self,(void*)(CARDPTR)idx);
         }
         old=elements[idx];
         [old release];

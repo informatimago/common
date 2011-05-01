@@ -17,7 +17,7 @@ AUTHOR
 MODIFICATIONS
     1996/09/17 <PJB> Creation (from BoList, which becomes a subclass).
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 1996
+    Copyright Pascal J. Bourguignon 1992 - 2011
     All rights reserved.
     This program may not be included in any commercial product without the 
     author written permission. It may be used freely for any non-commercial 
@@ -43,7 +43,7 @@ LEGAL
         }else{
             capacity=newCapacity;
         }
-        elements=(id*)BcMem_Allocate(sizeof(id)*capacity);
+        elements=(id*)BcMem_Allocate((CARD32)sizeof(id)*capacity);
         return(self);
     }/*initCount:;*/
 
@@ -76,11 +76,11 @@ LEGAL
             CARD32          i;
             
         [super printOn:file];
-        fprintf(file,"count=          %8lu\n",count);
-        fprintf(file,"capacity=       %8lu\n",capacity);
+        fprintf(file,"count=          %8"FMT_CARD32"\n",count);
+        fprintf(file,"capacity=       %8"FMT_CARD32"\n",capacity);
         i=0;
         while(i<count){
-            fprintf(file,"[%4lu]=         %p\n",i,(void*)(elements[i]));
+            fprintf(file,"[%4"FMT_CARD32"]=         %p\n",i,(void*)(elements[i]));
             INC(i);
         }
     }/*printOn:;*/
@@ -119,9 +119,9 @@ LEGAL
             newCapacity=BoListNoRetain_Minimum;
         }
         if(count>newCapacity){
-            BcRAISE(BoListNoRetain_eCapacityTooLow,(void*)self,(void*)newCapacity);
+            BcRAISE(BoListNoRetain_eCapacityTooLow,(void*)self,(void*)(CARDPTR)newCapacity);
         }else{
-            newElements=(id*)BcMem_Allocate(sizeof(id)*newCapacity);
+            newElements=(id*)BcMem_Allocate((CARD32)sizeof(id)*newCapacity);
             i=0;
             while(i<count){
                 newElements[i]=elements[i];
@@ -150,7 +150,7 @@ LEGAL
     -(id)objectAt:(CARD32)idx
     {
         if(idx>=count){
-            BcRAISE(BoListNoRetain_eBadIndex,(void*)self,(void*)idx);
+            BcRAISE(BoListNoRetain_eBadIndex,(void*)self,(void*)(CARDPTR)idx);
         }
         return(elements[idx]);
     }/*objectAt:;*/
@@ -206,7 +206,7 @@ LEGAL
             id          oldObject;
             
         if(idx>=count){
-            BcRAISE(BoListNoRetain_eBadIndex,(void*)self,(void*)idx);
+            BcRAISE(BoListNoRetain_eBadIndex,(void*)self,(void*)(CARDPTR)idx);
         }
         oldObject=elements[idx];
         while(idx<count){
@@ -237,7 +237,7 @@ LEGAL
             BcRAISE(BoListNoRetain_eNilObject,(void*)self,NIL);
         }
         if(idx>=count){
-            BcRAISE(BoListNoRetain_eBadIndex,(void*)self,(void*)idx);
+            BcRAISE(BoListNoRetain_eBadIndex,(void*)self,(void*)(CARDPTR)idx);
         }
         oldObject=elements[idx];
         elements[idx]=newObject;

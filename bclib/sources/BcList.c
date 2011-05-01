@@ -27,7 +27,7 @@ MODIFICATIONS
     1992-10-25 <PJB> Upgraded to the same interface as NeXTstep objc/List.h.
     1992-07-21 <PJB> Creation (BoArray).
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 2003
+    Copyright Pascal J. Bourguignon 1992 - 2011
 
     This file is part of the bclib library.
 
@@ -72,7 +72,7 @@ LEGAL
         plist=(BcList_P)BcMem_Allocate(sizeof(BcList_R));
         plist->count=0;
         plist->capacity=BcList_Minimum;
-        plist->elements=(void**)BcMem_Allocate(sizeof(void*)*plist->capacity);
+        plist->elements=(void**)BcMem_Allocate((CARD32)sizeof(void*)*plist->capacity);
         return((BcList_T)plist);
     }/*BcList_Allocate;*/
     
@@ -136,9 +136,9 @@ LEGAL
             newCapacity=BcList_Minimum;
         }
         if(plist->count>newCapacity){
-            BcRAISE(BcList_eCapacityTooLow,(void*)list,(void*)newCapacity);
+            BcRAISE(BcList_eCapacityTooLow,(void*)list,(void*)(CARDPTR)newCapacity);
         }else{
-            newElements=(void**)BcMem_Allocate(sizeof(void*)*newCapacity);
+            newElements=(void**)BcMem_Allocate((CARD32)sizeof(void*)*newCapacity);
             i=0;
             while(i<plist->count){
                 newElements[i]=plist->elements[i];
@@ -166,7 +166,7 @@ LEGAL
         
         plist=(BcList_P)list;
         if(idx>=plist->count){
-            BcRAISE(BcList_eBadIndex,list,(void*)idx);
+            BcRAISE(BcList_eBadIndex,list,(void*)(CARDPTR)idx);
         }
         return(plist->elements[idx]);
     }/*BcList_ObjectAt;*/
@@ -255,7 +255,7 @@ Console_fprintf(console,"BcList_InsertObjectAt returns TRUE\n");
         
         plist=(BcList_P)list;
         if(idx>=plist->count){
-            BcRAISE(BcList_eBadIndex,(void*)list,(void*)idx);
+            BcRAISE(BcList_eBadIndex,(void*)list,(void*)(CARDPTR)idx);
         }
         oldObject=plist->elements[idx];
         while(idx<plist->count){
@@ -293,7 +293,7 @@ Console_fprintf(console,"BcList_InsertObjectAt returns TRUE\n");
             BcRAISE(BcList_eNilObject,(void*)list,NIL);
         }
         if(idx>=plist->count){
-            BcRAISE(BcList_eBadIndex,(void*)list,(void*)idx);
+            BcRAISE(BcList_eBadIndex,(void*)list,(void*)(CARDPTR)idx);
         }
         oldObject=plist->elements[idx];
         plist->elements[idx]=newObject;

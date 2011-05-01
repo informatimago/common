@@ -24,7 +24,7 @@ MODIFICATIONS
     1993-09-08 <PJB> Removed RANDOMFILE. Now, the random file is found 
                      from environment variable.
 LEGAL
-    Copyright Pascal J. Bourguignon 1990 - 2002
+    Copyright Pascal J. Bourguignon 1990 - 2011
 
     This file is part of the bclib library.
 
@@ -124,7 +124,8 @@ LEGAL
     {
         INT32       i;
         for(i=0;i<56;i++){
-            fscanf(fd,"%lu",&(X[i]));
+            int err=fscanf(fd,"%"FMT_CARD32,&(X[i]));
+            (void)err;
         }
     }/*load; */
     
@@ -134,7 +135,7 @@ LEGAL
     {
         INT32       i;
         for(i=0;i<56;i++){
-            fprintf(fd,"%lu ",X[i]);
+            fprintf(fd,"%"FMT_CARD32" ",X[i]);
         }
     }/*save*/
     

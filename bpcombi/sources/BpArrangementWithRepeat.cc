@@ -19,7 +19,7 @@ MODIFICATIONS
     
     1996/08/04 <PJB> Creation. 
 LEGAL
-    Copyright Pascal J. Bourguignon 1996 - 1996
+    Copyright Pascal J. Bourguignon 1996 - 2011
     All rights reserved.
     This program may not be included in any commercial product without the 
     author written permission. It may be used freely for any non-commercial 
@@ -85,7 +85,7 @@ LEGAL
             CARD32      r;
         r=1;
         while(exponent>0){
-            if(exponent&1==0){
+            if((exponent&1)==0){
                 x*=x;
                 exponent/=2;
             }else{

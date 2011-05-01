@@ -20,7 +20,7 @@ MODIFICATIONS
     1993/01/17 <PJB> Converted from C++ to Objective-C.
     1993/03/19 <PJB> Updated to use newly Bc- prefixed interfaces.
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 1993
+    Copyright Pascal J. Bourguignon 1992 - 2011
     All rights reserved.
     This program may not be included in any commercial product without the 
     author written permission. It may be used freely for any non-commercial 

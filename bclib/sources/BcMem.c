@@ -37,7 +37,7 @@ MODIFICATIONS
                     in the same sources.
     1993-12-06 <PJB> Added Fill.
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 2002
+    Copyright Pascal J. Bourguignon 1992 - 2011
 
     This file is part of the bclib library.
 
@@ -77,11 +77,11 @@ LEGAL
             void*       p;
         
         if(size==0){
-            BcRAISE(BcMem_eRequestedNullSize,(void*)size,NIL);
+            BcRAISE(BcMem_eRequestedNullSize,(void*)(CARDPTR)size,NIL);
         }
         p=malloc((size_t)size);
         if(p==NIL){
-            BcRAISE(BcMem_eMallocReturnedNIL,(void*)size,NIL);
+            BcRAISE(BcMem_eMallocReturnedNIL,(void*)(CARDPTR)size,NIL);
         }
         return(p);
     }/*BcMem_Allocate;*/
@@ -101,34 +101,34 @@ LEGAL
             CARD32*         p4;
         
         p1=p;
-        if((size>=sizeof(CARD8))AND((((CARD32)p1)&(sizeof(CARD8)))!=0)){
+        if((size>=sizeof(CARD8)) AND ((((CARDPTR)p1)&((CARDPTR)(sizeof(CARD8))))!=0)){
             (*p1)=(CARD8)0;
             INC(p1);
-            size-=sizeof(CARD8);
+            size-=(CARD32)sizeof(CARD8);
         }
         p2=(CARD16*)p1;
-        if((size>=sizeof(CARD16))AND((((CARD32)p2)&(sizeof(CARD16)))!=0)){
+        if((size>=sizeof(CARD16))AND((((CARDPTR)p2)&(CARDPTR)(sizeof(CARD16)))!=0)){
             (*p2)=(CARD16)0;
             INC(p2);
-            size-=sizeof(CARD16);
+            size-=(CARD32)sizeof(CARD16);
         }
         p4=(CARD32*)p2;
         while(size>=sizeof(CARD32)){
             (*p4)=0;
             INC(p4);
-            size-=sizeof(CARD32);
+            size-=(CARD32)sizeof(CARD32);
         }
         p2=(CARD16*)p4;
         if(size>=sizeof(CARD16)){
             (*p2)=(CARD16)0;
             INC(p2);
-            size-=sizeof(CARD16);
+            size-=(CARD32)sizeof(CARD16);
         }
         p1=(CARD8*)p2;
         if(size>=sizeof(CARD8)){
             (*p1)=(CARD8)0;
             INC(p1);
-            size-=sizeof(CARD8);
+            size-=(CARD32)sizeof(CARD8);
         }
     }/*BcMem_Clear;*/
 
@@ -147,34 +147,34 @@ LEGAL
         
         fill.array[0]=fill.array[1]=fill.array[2]=fill.array[3]=value;
         p1=p;
-        if((size>=sizeof(CARD8))AND((((CARD32)p1)&(sizeof(CARD8)))!=0)){
+        if((size>=sizeof(CARD8))AND((((CARDPTR)p1)&(CARDPTR)(sizeof(CARD8)))!=0)){
             (*p1)=fill.byte;
             INC(p1);
-            size-=sizeof(CARD8);
+            size-=(CARD32)sizeof(CARD8);
         }
         p2=(CARD16*)p1;
-        if((size>=sizeof(CARD16))AND((((CARD32)p2)&(sizeof(CARD16)))!=0)){
+        if((size>=sizeof(CARD16))AND((((CARDPTR)p2)&(CARDPTR)(sizeof(CARD16)))!=0)){
             (*p2)=fill.word;
             INC(p2);
-            size-=sizeof(CARD16);
+            size-=(CARD32)sizeof(CARD16);
         }
         p4=(CARD32*)p2;
         while(size>=sizeof(CARD32)){
             (*p4)=fill.longword;
             INC(p4);
-            size-=sizeof(CARD32);
+            size-=(CARD32)sizeof(CARD32);
         }
         p2=(CARD16*)p4;
         if(size>=sizeof(CARD16)){
             (*p2)=fill.word;
             INC(p2);
-            size-=sizeof(CARD16);
+            size-=(CARD32)sizeof(CARD16);
         }
         p1=(CARD8*)p2;
         if(size>=sizeof(CARD8)){
             (*p1)=fill.byte;
             INC(p1);
-            size-=sizeof(CARD8);
+            size-=(CARD32)sizeof(CARD8);
         }
     }/*BcMem_Fill;*/
     
@@ -186,8 +186,8 @@ LEGAL
             const CARD32*   f4;
             CARD32*         t4;
         
-        if((((CARD32)from)&1)!=(((CARD32)to)&1)){
-            if((CARD32)from<(CARD32)to){
+        if((((CARDPTR)from)&1)!=(((CARDPTR)to)&1)){
+            if((CARDPTR)from<(CARDPTR)to){
                 f1=((const CARD8*)from)+size;
                 t1=((CARD8*)to)+size;
                 while(size>0){
@@ -207,10 +207,10 @@ LEGAL
                 }
             }
         }else{
-            if((CARD32)from<(CARD32)to){
+            if((CARDPTR)from<(CARDPTR)to){
                 f1=((const CARD8*)from)+size;
                 t1=((CARD8*)to)+size;
-                while((size>0)&&((((CARD32)from)&3)!=0)){
+                while((size>0)&&((((CARDPTR)from)&3)!=0)){
                     DEC(f1);
                     DEC(t1);
                     (*t1)=(*f1);
@@ -222,7 +222,7 @@ LEGAL
                     DEC(f4);
                     DEC(t4);
                     (*t4)=(*f4);
-                    DECR(size,sizeof(CARD32));
+                    DECR(size,(CARD32)sizeof(CARD32));
                 }
                 f1=(const CARD8*)f4;
                 t1=(CARD8*)t4;
@@ -235,7 +235,7 @@ LEGAL
             }else{
                 f1=from;
                 t1=to;
-                while((size>0)&&((((CARD32)from)&3)!=0)){
+                while((size>0)&&((((CARDPTR)from)&3)!=0)){
                     (*t1)=(*f1);
                     INC(f1);
                     INC(t1);
@@ -247,7 +247,7 @@ LEGAL
                     (*t4)=(*f4);
                     INC(f4);
                     INC(t4);
-                    DECR(size,sizeof(CARD32));
+                    DECR(size,(CARD32)sizeof(CARD32));
                 }
                 f1=(const CARD8*)f4;
                 t1=(CARD8*)t4;

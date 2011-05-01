@@ -14,7 +14,7 @@ MODIFICATIONS
 LEGAL
     GPL
     
-    Copyright Pascal Bourguignon 2003 - 2003
+    Copyright Pascal Bourguignon 2003 - 2011
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
@@ -69,17 +69,13 @@ LEGAL
     {
         eSize=32;
         eCount=0;
-        encodingTableNames=(const char**)
-            malloc(sizeof(const char*)*eSize);
-        encodingTables=(BenEncodingTableT**)
-            malloc(sizeof(BenEncodingTableT*)*eSize);
+        encodingTableNames=(const char**)malloc(sizeof(const char*)*(size_t)eSize);
+        encodingTables=(BenEncodingTableT**)malloc(sizeof(BenEncodingTableT*)*(size_t)eSize);
 
         aSize=8;
         aCount=0;
-        approximationTableNames=(const char**)
-            malloc(sizeof(const char*)*aSize);
-        approximationTables=(BenApproximationTableT**)
-            malloc(sizeof(BenApproximationTableT*)*aSize);
+        approximationTableNames=(const char**)malloc(sizeof(const char*)*(size_t)aSize);
+        approximationTables=(BenApproximationTableT**)malloc(sizeof(BenApproximationTableT*)*(size_t)aSize);
 
         initialized=TRUE;
 
@@ -145,9 +141,8 @@ LEGAL
             const char**         nNames;
             BenEncodingTableT** nTables;
             eSize*=2;
-            nNames=(const char**)malloc(sizeof(const char*)*eSize);
-            nTables=(BenEncodingTableT**)
-                malloc(sizeof(BenEncodingTableT*)*eSize);
+            nNames=(const char**)malloc(sizeof(const char*)*(size_t)eSize);
+            nTables=(BenEncodingTableT**)malloc(sizeof(BenEncodingTableT*)*(size_t)eSize);
             for(i=0;i<eCount;i++){
                 nNames[i]=encodingTableNames[i];
                 nTables[i]=encodingTables[i];
@@ -219,9 +214,8 @@ LEGAL
             const char**              nNames;
             BenApproximationTableT** nTables;
             aSize*=2;
-            nNames=(const char**)malloc(sizeof(const char*)*aSize);
-            nTables=(BenApproximationTableT**)
-                malloc(sizeof(BenApproximationTableT*)*aSize);
+            nNames=(const char**)malloc(sizeof(const char*)*(size_t)aSize);
+            nTables=(BenApproximationTableT**)malloc(sizeof(BenApproximationTableT*)*(size_t)aSize);
             for(i=0;i<aCount;i++){
                 nNames[i]=approximationTableNames[i];
                 nTables[i]=approximationTables[i];
@@ -392,12 +386,12 @@ LEGAL
     {
         BcString_T result=BcString_Allocate();
         char buffer[1024];
-        int ml=0;
+        size_t ml=0;
         int i;
 
         /* Get the longest converted string */
         for(i=0;i<256;i++){
-            int l=strlen((*table)[i]);
+            size_t l=strlen((*table)[i]);
             if(l>ml){
                 ml=l;
             }

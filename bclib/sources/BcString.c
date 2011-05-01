@@ -28,7 +28,7 @@ MODIFICATIONS
                     This is needed for we can mix Objective-C with CPlusPlus
                     in the same sources.
 LEGAL
-    Copyright Pascal J. Bourguignon 1993 - 2002
+    Copyright Pascal J. Bourguignon 1993 - 2011
 
     This file is part of the bclib library.
 
@@ -55,320 +55,316 @@ LEGAL
 
 
 
-    const char BcString_ID[]=
-    "$Id: BcString.c,v 1.3 2004/01/21 06:26:09 pjbpjb Exp $";
+const char BcString_ID[]=
+  "$Id: BcString.c,v 1.3 2004/01/21 06:26:09 pjbpjb Exp $";
     
-    typedef struct {
-        char*               data;
-        INT32               dlength;
-        INT32               allocation;
-    }                   BcString_S;
-    typedef BcString_S* BcString_P;
+typedef struct {
+    char*               data;
+    INT32               dlength;
+    INT32               allocation;
+}                   BcString_S;
+typedef BcString_S* BcString_P;
     
 
 /*
-    INVARIANTS:
-        data#NIL
-        1<=allocation
-        0<=dlength<allocation
-        data[dlength]=(char)0
-        for all i in [0..dlength-1], data[i]#(char)0
+  INVARIANTS:
+  data#NIL
+  1<=allocation
+  0<=dlength<allocation
+  data[dlength]=(char)0
+  for all i in [0..dlength-1], data[i]#(char)0
 */
 
 #define AllocIncrement  (128)
 #define Minimum(a,b)    (((a)<(b))?(a):(b))
 
 
-    PROCEDURE(BcString_SetCapacityCopy,
-            (BcString_T t,INT32 nAllocation,BOOLEAN copy),BcString_T)
+PROCEDURE(BcString_SetCapacityCopy,
+          (BcString_T t,INT32 nAllocation,BOOLEAN copy),BcString_T)
 
-    {
-            BcString_P      this=(BcString_P)t;
-            char*           nData;
-            INT32           nLength;
+{
+    BcString_P      this=(BcString_P)t;
+    char*           nData;
+    INT32           nLength;
             
-        if(nAllocation>1){
-            nData=BcMem_Allocate(sizeof(char)*nAllocation);
-            if(copy){
-                nLength=Minimum(nAllocation-1,this->dlength);
-                BcMem_Copy(this->data,nData,nLength*sizeof(char));
-            }else{
-                nLength=0;
-            }
+    if(nAllocation>1){
+        nData=BcMem_Allocate((CARD32)sizeof(char)*(CARD32)nAllocation);
+        if(copy){
+            nLength=Minimum(nAllocation-1,this->dlength);
+            BcMem_Copy(this->data,nData,(CARD32)nLength*(CARD32)sizeof(char));
         }else{
-            nAllocation=1;
-            nData=BcMem_Allocate(sizeof(char)*nAllocation);
             nLength=0;
         }
-        nData[nLength]=(char)0;
-        BcMem_Deallocate((void**)(&(this->data)));
-        this->data=nData;
-        this->dlength=nLength;
-        this->allocation=nAllocation;
-        return(this);
-    }/*setCapacity;*/
+    }else{
+        nAllocation=1;
+        nData=BcMem_Allocate((CARD32)sizeof(char)*(CARD32)nAllocation);
+        nLength=0;
+    }
+    nData[nLength]=(char)0;
+    BcMem_Deallocate((void**)(&(this->data)));
+    this->data=nData;
+    this->dlength=nLength;
+    this->allocation=nAllocation;
+    return(this);
+}/*setCapacity;*/
 
 
 /* birth and death:*/
 
-    PROCEDURE(BcString_Allocate,(void),BcString_T)
-    {
-            BcString_P      this;
-        this=BcMem_Allocate(sizeof(BcString_S));
-        this->allocation=1;
-        this->data=BcMem_Allocate(sizeof(char)*this->allocation);
-        this->dlength=0;
-        this->data[this->dlength]=(char)0;
-        return(this);
-    }/*BcString;*/
+PROCEDURE(BcString_Allocate,(void),BcString_T)
+{
+    BcString_P      this;
+    this=BcMem_Allocate(sizeof(BcString_S));
+    this->allocation=1;
+    this->data=BcMem_Allocate((CARD32)sizeof(char)*(CARD32)(this->allocation));
+    this->dlength=0;
+    this->data[this->dlength]=(char)0;
+    return(this);
+}/*BcString;*/
     
-    PROCEDURE(BcString_Deallocate,(BcString_T* t),void)
-    {
-            BcString_P      this=(BcString_P)(*t);
+PROCEDURE(BcString_Deallocate,(BcString_T* t),void)
+{
+    BcString_P      this=(BcString_P)(*t);
 
-        BcString_SetCapacityCopy(this,0,FALSE);
-        BcMem_Deallocate(t);
-    }/*~BcString;*/
+    BcString_SetCapacityCopy(this,0,FALSE);
+    BcMem_Deallocate(t);
+}/*~BcString;*/
 
 
 /* override BcObject methods:*/
 
-    PROCEDURE(BcString_ClassName,(BcString_T t),const char*)
-    {
+PROCEDURE(BcString_ClassName,(BcString_T t),const char*)
+{
 #ifdef MSVC
-        t=t;
+    t=t;
 #endif
-        return("BcString");
-    }/*className;*/
+    return("BcString");
+}/*className;*/
     
     
-    PROCEDURE(BcString_PrintOn,(BcString_T t,FILE* file),void)
-    {
-            BcString_P      this=(BcString_P)t;
+PROCEDURE(BcString_PrintOn,(BcString_T t,FILE* file),void)
+{
+    BcString_P      this=(BcString_P)t;
             
-        /* BcString_SUPER::printOn(file); */
-        fprintf(file,"data=           %p\n",(void*)(this->data));
-        if(this->data!=NIL){
-            fprintf(file,"*data=          \"%s\"\n",this->data);
-        }
-        fprintf(file,"dlength=         %ld\n",this->dlength);
-        fprintf(file,"allocation=     %ld\n",this->allocation);
-    }/*printOn:;*/
+    /* BcString_SUPER::printOn(file); */
+    fprintf(file,"data=           %p\n",(void*)(this->data));
+    if(this->data!=NIL){
+        fprintf(file,"*data=          \"%s\"\n",this->data);
+    }
+    fprintf(file,"dlength=        %"FMT_INT32"\n",this->dlength);
+    fprintf(file,"allocation=     %"FMT_INT32"\n",this->allocation);
+}/*printOn:;*/
     
     
 /* new methods:*/
 
-    PROCEDURE(BcString_Length,(BcString_T t),INT32)
-    {
-            BcString_P      this=(BcString_P)t;
+PROCEDURE(BcString_Length,(BcString_T t),INT32)
+{
+    BcString_P      this=(BcString_P)t;
 
-        return(this->dlength);
-    }/*length;*/
+    return(this->dlength);
+}/*length;*/
     
     
-    PROCEDURE(BcString_String,(BcString_T t),const char*)
-    {
-            BcString_P      this=(BcString_P)t;
+PROCEDURE(BcString_String,(BcString_T t),const char*)
+{
+    BcString_P      this=(BcString_P)t;
             
-        return(this->data);
-    }/*string;*/
+    return(this->data);
+}/*string;*/
 
 
-    PROCEDURE(BcString_SetString,
-                (BcString_T t,const char* nString),BcString_T)
-    {
-            BcString_P      this=(BcString_P)t;
-            INT32           nLength;
+PROCEDURE(BcString_SetString,
+          (BcString_T t,const char* nString),BcString_T)
+{
+    BcString_P      this=(BcString_P)t;
+    INT32           nLength;
         
-        nLength=strlen(nString);
-        if(nLength>=this->allocation){
-            BcString_SetCapacityCopy(this,nLength+1,FALSE);
-        }
-        BcMem_Copy((const void*)nString,this->data,nLength*sizeof(char));
-        this->data[nLength]=(char)0;
-        this->dlength=nLength;
-        return(this);
-    }/*setString:;*/
+    nLength=(INT32)strlen(nString);
+    if(nLength>=this->allocation){
+        BcString_SetCapacityCopy(this,nLength+1,FALSE);
+    }
+    BcMem_Copy((const void*)nString,this->data,(CARD32)nLength*(CARD32)sizeof(char));
+    this->data[nLength]=(char)0;
+    this->dlength=nLength;
+    return(this);
+}/*setString:;*/
 
 
-    PROCEDURE(BcString_GetString,(BcString_T t,char* string),BcString_T)
-    {
-            BcString_P      this=(BcString_P)t;
+PROCEDURE(BcString_GetString,(BcString_T t,char* string),BcString_T)
+{
+    BcString_P      this=(BcString_P)t;
 
-        BcMem_Copy(this->data,string,this->dlength*sizeof(char));
-        string[this->dlength]=(char)0;
-        return(this);
-    }/*getString:;*/
+    BcMem_Copy(this->data,string,(CARD32)(this->dlength)*(CARD32)sizeof(char));
+    string[this->dlength]=(char)0;
+    return(this);
+}/*getString:;*/
     
     
-    PROCEDURE(BcString_AppendString,(BcString_T t,const char* str),BcString_T)
-    {
-            BcString_P      this=(BcString_P)t;
-            INT32           nLength;
-            INT32           sLength;
+PROCEDURE(BcString_AppendString,(BcString_T t,const char* str),BcString_T)
+{
+    BcString_P      this=(BcString_P)t;
+    INT32           nLength;
+    INT32           sLength;
         
-        sLength=strlen(str);
-        nLength=sLength+this->dlength;
-        if(nLength>=this->allocation){
-            BcString_SetCapacityCopy(this,nLength+1,TRUE);
-        }
-        BcMem_Copy((const void*)str,
-                   this->data+this->dlength,sLength*sizeof(char));
-        this->data[nLength]=(char)0;
-        this->dlength=nLength;
-        return(this);
-    }/*BcString_AppendString*/
+    sLength=(INT32)strlen(str);
+    nLength=sLength+this->dlength;
+    if(nLength>=this->allocation){
+        BcString_SetCapacityCopy(this,nLength+1,TRUE);
+    }
+    BcMem_Copy((const void*)str,this->data+this->dlength,(CARD32)sLength*(CARD32)sizeof(char));
+    this->data[nLength]=(char)0;
+    this->dlength=nLength;
+    return(this);
+}/*BcString_AppendString*/
     
 
-    PROCEDURE(BcString_CharAt,(BcString_T t,INT32 idx),char)
-    {
-            BcString_P      this=(BcString_P)t;
+PROCEDURE(BcString_CharAt,(BcString_T t,INT32 idx),char)
+{
+    BcString_P      this=(BcString_P)t;
 
-        if((idx<0)OR(idx>=this->dlength)){
-            return((char)0);
-        }else{
-            return(this->data[idx]);
-        }
-    }/*charAt:;*/
+    if((idx<0)OR(idx>=this->dlength)){
+        return((char)0);
+    }else{
+        return(this->data[idx]);
+    }
+}/*charAt:;*/
 
 
-    PROCEDURE(BcString_SetCharAt,
-                (BcString_T t,char nChar,INT32 idx),BcString_T)
-    {
-            BcString_P      this=(BcString_P)t;
+PROCEDURE(BcString_SetCharAt,
+          (BcString_T t,char nChar,INT32 idx),BcString_T)
+{
+    BcString_P      this=(BcString_P)t;
 
-        if((0<=idx)AND(idx<=this->dlength)){
-            if(nChar==(char)0){
-                this->dlength=idx;
-            }else if(idx==this->dlength){
-                if(this->allocation<=this->dlength+1){
-                    BcString_SetCapacityCopy(this,
-                                    this->allocation+AllocIncrement,TRUE);
-                }
-                INC(this->dlength);
-                this->data[this->dlength]=(char)0;
+    if((0<=idx)AND(idx<=this->dlength)){
+        if(nChar==(char)0){
+            this->dlength=idx;
+        }else if(idx==this->dlength){
+            if(this->allocation<=this->dlength+1){
+                BcString_SetCapacityCopy(this,
+                                         this->allocation+AllocIncrement,TRUE);
             }
-            this->data[idx]=nChar;
+            INC(this->dlength);
+            this->data[this->dlength]=(char)0;
         }
-        return(this);
-    }/*setChar:;*/
+        this->data[idx]=nChar;
+    }
+    return(this);
+}/*setChar:;*/
 
 
     
-    PROCEDURE(BcString_InsertAt,
-                (BcString_T t,BcString_T substring,INT32 idx),BcString_T)
-    {
-            BcString_P      this=(BcString_P)t;
-            BcString_P      sub=(BcString_P)substring;
-            INT32           nLength;
+PROCEDURE(BcString_InsertAt,
+          (BcString_T t,BcString_T substring,INT32 idx),BcString_T)
+{
+    BcString_P      this=(BcString_P)t;
+    BcString_P      sub=(BcString_P)substring;
+    INT32           nLength;
 
-        if(idx<0){
-            idx=0;
-        }else if(this->dlength<idx){
-            idx=this->dlength;
-        }
-        nLength=this->dlength+sub->dlength;
-        if(nLength>=this->allocation){
-            /* SEE: We copy some char of this twice !*/
-            BcString_SetCapacityCopy(this,nLength+1,TRUE);
-        }
-        BcMem_Copy(this->data+idx,
-                    this->data+idx+sub->dlength,
-                    (this->dlength-idx+1)*sizeof(char));
-        BcMem_Copy(sub->data,
-                    this->data+idx,
-                    sub->dlength*sizeof(char));
-        this->dlength=nLength;
+    if(idx<0){
+        idx=0;
+    }else if(this->dlength<idx){
+        idx=this->dlength;
+    }
+    nLength=this->dlength+sub->dlength;
+    if(nLength>=this->allocation){
+        /* SEE: We copy some char of this twice !*/
+        BcString_SetCapacityCopy(this,nLength+1,TRUE);
+    }
+    BcMem_Copy(this->data+idx,
+               this->data+idx+sub->dlength,
+               (CARD32)(this->dlength-idx+1)*(CARD32)sizeof(char));
+    BcMem_Copy(sub->data,
+               this->data+idx,
+               (CARD32)(sub->dlength)*(CARD32)sizeof(char));
+    this->dlength=nLength;
+    return(this);
+}/*insert:at:;*/
+
+
+PROCEDURE(BcString_DeleteFromLength,
+          (BcString_T t,INT32 idx,INT32 delen),BcString_T)
+{
+    BcString_P      this=(BcString_P)t;
+
+    if(idx<0){
+        idx=0;
+    }else if(this->dlength<=idx){
         return(this);
-    }/*insert:at:;*/
+    }
+    if(this->dlength<idx+delen){
+        delen=this->dlength-idx;
+    }
+    BcMem_Copy(this->data+idx+delen,this->data+idx,
+               (CARD32)(this->dlength-(idx+delen)+1)*(CARD32)sizeof(char));
+    this->dlength=this->dlength-delen;
+    return(this);
+}/*deleteFrom:dlength:;*/
 
 
-    PROCEDURE(BcString_DeleteFromLength,
-                (BcString_T t,INT32 idx,INT32 delen),BcString_T)
-    {
-            BcString_P      this=(BcString_P)t;
-
-        if(idx<0){
-            idx=0;
-        }else if(this->dlength<=idx){
-            return(this);
-        }
-        if(this->dlength<idx+delen){
-            delen=this->dlength-idx;
-        }
-        BcMem_Copy(this->data+idx+delen,this->data+idx,
-                    (this->dlength-(idx+delen)+1)*sizeof(char));
-        this->dlength=this->dlength-delen;
-        return(this);
-    }/*deleteFrom:dlength:;*/
-
-
-    PROCEDURE(BcString_PositionFrom,
-                (BcString_T t,BcString_T substring,INT32 idx),INT32)
-    {
-        /* SEE: could we use the FastStringSearch algorithm?*/
-            BcString_P      this=(BcString_P)t;
-            BcString_P      sub=(BcString_P)substring;
-            INT32           pos;
-            INT32           i;
-            INT32           max;
+PROCEDURE(BcString_PositionFrom,
+          (BcString_T t,BcString_T substring,INT32 idx),INT32)
+{
+    /* SEE: could we use the FastStringSearch algorithm?*/
+    BcString_P      this=(BcString_P)t;
+    BcString_P      sub=(BcString_P)substring;
+    INT32           pos;
+    INT32           i;
+    INT32           max;
         
-        max=this->dlength-sub->dlength;     
-        if(idx<0){
-            pos=0;
-        }else{
-            pos=idx;
+    max=this->dlength-sub->dlength;     
+    if(idx<0){
+        pos=0;
+    }else{
+        pos=idx;
+    }
+    while(pos<=max){
+        i=0;
+        while(this->data[pos+i]==sub->data[i]){
+            INC(i);
         }
-        while(pos<=max){
-            i=0;
-            while(this->data[pos+i]==sub->data[i]){
-                INC(i);
-            }
-            if(sub->data[i]==(char)0){
-                return(pos);
-            }
-            INC(pos);
+        if(sub->data[i]==(char)0){
+            return(pos);
         }
-        /* not found*/
-        return(-1);
-    }/*position:;*/
+        INC(pos);
+    }
+    /* not found*/
+    return(-1);
+}/*position:;*/
 
 
-    PROCEDURE(BcString_CopyFromLength,
-            (BcString_T t,BcString_T string,INT32 idx,INT32 copylen),
-            BcString_T)
-    {
-            BcString_P      this=(BcString_P)t;
-            BcString_P      str=(BcString_P)string;
+PROCEDURE(BcString_CopyFromLength,
+          (BcString_T t,BcString_T string,INT32 idx,INT32 copylen),
+          BcString_T)
+{
+    BcString_P      this=(BcString_P)t;
+    BcString_P      str=(BcString_P)string;
 
-        if(idx+copylen>str->dlength){
-            copylen=str->dlength-idx;
-        }
-        if(copylen<=0){
-            this->data[0]=(char)0;
-            this->dlength=0;
-            return(this);
-        }
-        if(copylen>=this->allocation){
-            BcString_SetCapacityCopy(this,copylen+1,FALSE);
-        }
-        BcMem_Copy(str->data+idx,this->data,copylen*sizeof(char));
-        this->data[copylen]=(char)0;
-        this->dlength=copylen;
+    if(idx+copylen>str->dlength){
+        copylen=str->dlength-idx;
+    }
+    if(copylen<=0){
+        this->data[0]=(char)0;
+        this->dlength=0;
         return(this);
-    }/*copy:from:dlength:;*/
+    }
+    if(copylen>=this->allocation){
+        BcString_SetCapacityCopy(this,copylen+1,FALSE);
+    }
+    BcMem_Copy(str->data+idx,this->data,(CARD32)copylen*(CARD32)sizeof(char));
+    this->data[copylen]=(char)0;
+    this->dlength=copylen;
+    return(this);
+}/*copy:from:dlength:;*/
 
 
-    PROCEDURE(BcString_Append,(BcString_T t,BcString_T tail),BcString_T)
-    {
-            BcString_P      this=(BcString_P)t;
+PROCEDURE(BcString_Append,(BcString_T t,BcString_T tail),BcString_T)
+{
+    BcString_P      this=(BcString_P)t;
 
-        return(BcString_InsertAt(this,tail,this->dlength));
-    }/*append:;*/
+    return(BcString_InsertAt(this,tail,this->dlength));
+}/*append:;*/
     
 
 
 /*END BcString.*/
-
-
-/*** BcString.c                       -- 2003-11-30 07:25:46 -- pascal   ***/

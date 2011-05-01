@@ -25,7 +25,7 @@ MODIFICATIONS
     1992-10-25 <PJB> Upgraded to the same interface as NeXTstep objc/List.h.
     1992-07-21 <PJB> Creation ,(BoArray).
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 2003
+    Copyright Pascal J. Bourguignon 1992 - 2011
 
     This file is part of the bclib library.
 

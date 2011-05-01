@@ -48,7 +48,7 @@ MODIFICATIONS
                     This is needed for we can mix Objective-C with CPlusPlus
                     in the same sources.
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 2002
+    Copyright Pascal J. Bourguignon 1992 - 2011
 
     This file is part of the bplib library..
 
@@ -75,270 +75,269 @@ extern "C"{
 }
 #include BcImplementation_h
 
-    static const char rcsid[]="$Id: BpArray.cc,v 1.1 2003/12/04 04:52:58 pjbpjb Exp $";
+static const char rcsid[]="$Id: BpArray.cc,v 1.1 2003/12/04 04:52:58 pjbpjb Exp $";
 
 
 
 // birth and death:
 
-    CONSTRUCTOR(BpArray)
-    {
-        BpClass_PLUG(BpArray);
-        psize=0;
-        lsize=0;
-        elements=(BpObject**)NIL;
-    }//BpArray:;
+CONSTRUCTOR(BpArray)
+{
+    BpClass_PLUG(BpArray);
+    psize=0;
+    lsize=0;
+    elements=(BpObject**)NIL;
+}//BpArray:;
 
 
-    DESTRUCTOR(BpArray) // void
-    {
-        if(elements!=NIL){
-                CARD32      i;
-            for(i=0;i<lsize;i++){
-                if(elements[i]!=NIL){
-                    elements[i]->release();
-                }
+DESTRUCTOR(BpArray) // void
+{
+    if(elements!=NIL){
+        CARD32      i;
+        for(i=0;i<lsize;i++){
+            if(elements[i]!=NIL){
+                elements[i]->release();
             }
-            BcMem_Deallocate((void**)&elements);
         }
-    }//~BpArray;
+        BcMem_Deallocate((void**)&elements);
+    }
+}//~BpArray;
     
 
 // overrBpObject*e BpObject methods:
 
-    METHOD(BpArray,makeBrother,(void),BpObject*)
-    {
-        return(NEW(BpArray));
-    }//makeBrother;
+METHOD(BpArray,makeBrother,(void),BpObject*)
+{
+    return(NEW(BpArray));
+}//makeBrother;
     
 
-    METHOD(BpArray,printOnLevel,(FILE* file,CARD32 level),void)
-    {
-            CARD32          i;
+METHOD(BpArray,printOnLevel,(FILE* file,CARD32 level),void)
+{
+    CARD32          i;
 
-        BpArray_SUPER::printOnLevel(file,level);
-        PRINTONLEVEL(file,level,"%8lu",lsize,lsize);
-        PRINTONLEVEL(file,level,"%8lu",psize,psize);
-        i=0;
-        while(i<lsize){
-            PRINTONLEVEL_ELEMENT(file,level,"%p",elements,i,
-                                            (void*)(elements[i]));
-            INC(i);
-        }
-    }//printOnLevel;
+    BpArray_SUPER::printOnLevel(file,level);
+    PRINTONLEVEL(file,level,"%8lu",lsize,lsize);
+    PRINTONLEVEL(file,level,"%8lu",psize,psize);
+    i=0;
+    while(i<lsize){
+        PRINTONLEVEL_ELEMENT(file,level,"%p",elements,i,
+                             (void*)(elements[i]));
+        INC(i);
+    }
+}//printOnLevel;
     
     
 // new methods:
 
-    METHOD(BpArray,initWithObjectsCount,(BpObject** objects,CARD32 count),void)
-    {
-            CARD32      i;
+METHOD(BpArray,initWithObjectsCount,(BpObject** objects,CARD32 count),void)
+{
+    CARD32      i;
             
-        this->resize(count);
-        for(i=0;i<count;i++){
-            objects[i]->retain();
+    this->resize(count);
+    for(i=0;i<count;i++){
+        objects[i]->retain();
+        if(elements[i]!=NIL){
+            elements[i]->release();
+        }
+        elements[i]=objects[i];
+    }
+    selfChanged(BpArray_cInitializedWithObjects);
+}//initWithObjectsCount;
+    
+    
+METHOD(BpArray,size,(void),CARD32)
+{
+    return(lsize);
+}//size;
+    
+        
+METHOD(BpArray,resize,(CARD32 newSize),BpArray*)
+{
+    BpObject**      newElements;
+    CARD32          i;
+            
+    if(newSize>psize){
+        newElements=(BpObject**)BcMem_Allocate((CARD32)sizeof(BpObject*)*newSize);
+        psize=newSize;
+        i=0;
+        while(i<lsize){
+            newElements[i]=elements[i];
+            INC(i);
+        }
+        while(i<psize){
+            newElements[i]=(BpObject*)NIL;
+            INC(i);
+        }
+        if(elements!=NIL){
+            BcMem_Deallocate((void**)&elements);
+        }
+        elements=newElements;
+        lsize=newSize;
+    }else if(newSize>lsize){
+        // lsize < newSize <= psize
+        i=lsize;
+        while(i<newSize){
+            elements[i]=(BpObject*)NIL;
+            INC(i);
+        }
+        lsize=newSize;
+    }else{
+        // newSize <= lsize
+        for(i=newSize;i<lsize;i++){
             if(elements[i]!=NIL){
                 elements[i]->release();
             }
-            elements[i]=objects[i];
         }
-        selfChanged(BpArray_cInitializedWithObjects);
-    }//initWithObjectsCount;
-    
-    
-    METHOD(BpArray,size,(void),CARD32)
-    {
-        return(lsize);
-    }//size;
-    
-        
-    METHOD(BpArray,resize,(CARD32 newSize),BpArray*)
-    {
-            BpObject**      newElements;
-            CARD32          i;
-            
-        if(newSize>psize){
-            newElements=(BpObject**)BcMem_Allocate(sizeof(BpObject*)*newSize);
-            psize=newSize;
-            i=0;
-            while(i<lsize){
-                newElements[i]=elements[i];
-                INC(i);
-            }
-            while(i<psize){
-                newElements[i]=(BpObject*)NIL;
-                INC(i);
-            }
-            if(elements!=NIL){
-                BcMem_Deallocate((void**)&elements);
-            }
-            elements=newElements;
-            lsize=newSize;
-        }else if(newSize>lsize){
-            // lsize < newSize <= psize
-            i=lsize;
-            while(i<newSize){
-                elements[i]=(BpObject*)NIL;
-                INC(i);
-            }
-            lsize=newSize;
-        }else{
-            // newSize <= lsize
-            for(i=newSize;i<lsize;i++){
-                if(elements[i]!=NIL){
-                    elements[i]->release();
-                }
-            }
-            lsize=newSize;
-        }
-        selfChanged(BpArray_cResized);
-        return(this);
-    }//resize:;
+        lsize=newSize;
+    }
+    selfChanged(BpArray_cResized);
+    return(this);
+}//resize:;
             
 
-    METHOD(BpArray,objectAt,(CARD32 index),BpObject*)
-    {
-        if(index>=lsize){
-            BcRAISE(BpArray_eBadIndex,(void*)this,(void*)index);
-        }
-        return(elements[index]);
-    }//objectAt:;
+METHOD(BpArray,objectAt,(CARD32 index),BpObject*)
+{
+    if(index>=lsize){
+        BcRAISE(BpArray_eBadIndex,(void*)this,(void*)index);
+    }
+    return(elements[index]);
+}//objectAt:;
     
 
-    METHOD(BpArray,replaceObjectAtWith,
-                (CARD32 index,BpObject* newObject), BpObject*)
-    {
-            BpObject*           old;
+METHOD(BpArray,replaceObjectAtWith,
+       (CARD32 index,BpObject* newObject), BpObject*)
+{
+    BpObject*           old;
             
-        if(index>=lsize){
-            BcRAISE(BpArray_eBadIndex,(void*)this,(void*)index);
-        }
-        old=elements[index];
-        elements[index]=newObject;
-        if(old!=NIL){
-            old->release();
-        }
-        if(newObject!=NIL){
-            newObject->retain();
-        }
-        selfChanged(BpArray_cObjectReplaced);
-        return(old);
-    }//replaceObjectAt:with:;
+    if(index>=lsize){
+        BcRAISE(BpArray_eBadIndex,(void*)this,(void*)index);
+    }
+    old=elements[index];
+    elements[index]=newObject;
+    if(old!=NIL){
+        old->release();
+    }
+    if(newObject!=NIL){
+        newObject->retain();
+    }
+    selfChanged(BpArray_cObjectReplaced);
+    return(old);
+}//replaceObjectAt:with:;
 
 
-    METHOD(BpArray,insertObjectAt,(BpObject* newObject,CARD32 index),BpArray*)
-    {
-            CARD32              i;
+METHOD(BpArray,insertObjectAt,(BpObject* newObject,CARD32 index),BpArray*)
+{
+    CARD32              i;
             
-        if(index>=lsize){
-            BcRAISE(BpArray_eBadIndex,(void*)this,(void*)index);
-        }
-        i=lsize-1;
-        while(i>index){
-            elements[i]=elements[i-1];
-            DEC(i);
-        }
-        elements[i]=newObject;
-        if(newObject!=NIL){
-            newObject->retain();
-        }
-        selfChanged(BpArray_cObjectInserted);
-        return(this);
-    }//insertObject:at:;
+    if(index>=lsize){
+        BcRAISE(BpArray_eBadIndex,(void*)this,(void*)index);
+    }
+    i=lsize-1;
+    while(i>index){
+        elements[i]=elements[i-1];
+        DEC(i);
+    }
+    elements[i]=newObject;
+    if(newObject!=NIL){
+        newObject->retain();
+    }
+    selfChanged(BpArray_cObjectInserted);
+    return(this);
+}//insertObject:at:;
     
         
-    METHOD(BpArray,removeObjectAt,(CARD32 index),BpObject*)
-    {
-            CARD32              i;
-            BpObject*           old;
+METHOD(BpArray,removeObjectAt,(CARD32 index),BpObject*)
+{
+    CARD32              i;
+    BpObject*           old;
             
-        if(index>=lsize){
-            BcRAISE(BpArray_eBadIndex,(void*)this,(void*)index);
-        }
-        old=elements[index];
-        i=index;
-        while(i<lsize-1){
-            elements[i]=elements[i+1];
-            INC(i);
-        }
-        elements[i]=(BpObject*)NIL;
-        if(old!=NIL){
-            old->release();
-        }
-        selfChanged(BpArray_cObjectRemoved);
-        return(old);
-    }//removeObjectAt:;
+    if(index>=lsize){
+        BcRAISE(BpArray_eBadIndex,(void*)this,(void*)index);
+    }
+    old=elements[index];
+    i=index;
+    while(i<lsize-1){
+        elements[i]=elements[i+1];
+        INC(i);
+    }
+    elements[i]=(BpObject*)NIL;
+    if(old!=NIL){
+        old->release();
+    }
+    selfChanged(BpArray_cObjectRemoved);
+    return(old);
+}//removeObjectAt:;
     
     
-    METHOD(BpArray,indexOf,(BpObject* oldObject),CARD32)
-    {
-            CARD32          i;
+METHOD(BpArray,indexOf,(BpObject* oldObject),CARD32)
+{
+    CARD32          i;
         
-        i=0;
-        while((i<lsize)AND(elements[i]!=oldObject)){
-            INC(i);
-        }
-        if(i==lsize){
-            return(MAX_CARD32);
-        }else{
-            return(i);
-        }   
-    }//indexOf:;
+    i=0;
+    while((i<lsize)AND(elements[i]!=oldObject)){
+        INC(i);
+    }
+    if(i==lsize){
+        return(MAX_CARD32);
+    }else{
+        return(i);
+    }   
+}//indexOf:;
     
             
-    METHOD(BpArray,makeObjectsPerform,(BpArray_ActionPr proc),BpArray*)
-    {
-            CARD32                  i;
+METHOD(BpArray,makeObjectsPerform,(BpArray_ActionPr proc),BpArray*)
+{
+    CARD32                  i;
         
-        i=0;
-        while(i<lsize){
-            proc(elements[i]);
-            INC(i);
-        }
-        return(this);
-    }//makeOjectsPerform:;
+    i=0;
+    while(i<lsize){
+        proc(elements[i]);
+        INC(i);
+    }
+    return(this);
+}//makeOjectsPerform:;
     
     
-    METHOD(BpArray,makeObjectsPerformWith,
-            (BpArray_ActionWithPr proc,BpObject* anObject),BpArray*)
-    {
-            CARD32                  i;
+METHOD(BpArray,makeObjectsPerformWith,(BpArray_ActionWithPr proc,BpObject* anObject),BpArray*)
+{
+    CARD32                  i;
         
-        i=0;
-        while(i<lsize){
-            proc(elements[i],anObject);
-            INC(i);
-        }
-        return(this);
-    }//makeOjectsPerform:with:;
+    i=0;
+    while(i<lsize){
+        proc(elements[i],anObject);
+        INC(i);
+    }
+    return(this);
+}//makeOjectsPerform:with:;
     
 
-    METHOD(BpArray,withEachMakePerform,
-            (BpObject* receiver,BpArray_ActionWithPr proc),BpArray*)
-    {
-            CARD32                  i;
+METHOD(BpArray,withEachMakePerform,
+       (BpObject* receiver,BpArray_ActionWithPr proc),BpArray*)
+{
+    CARD32                  i;
         
-        i=0;
-        while(i<lsize){
-            proc(receiver,elements[i]);
-            INC(i);
-        }
-        return(this);
-    }//withEachMake:perform:;
+    i=0;
+    while(i<lsize){
+        proc(receiver,elements[i]);
+        INC(i);
+    }
+    return(this);
+}//withEachMake:perform:;
     
 
-    METHOD(BpArray,withEachMakePerformWithAndWith,
-            (BpObject* receiver,BpArray_ActionWithAndWithPr proc,
-             BpObject* obj),BpArray*)
-    {
-            CARD32                  i;
+METHOD(BpArray,withEachMakePerformWithAndWith,
+       (BpObject* receiver,BpArray_ActionWithAndWithPr proc,
+        BpObject* obj),BpArray*)
+{
+    CARD32                  i;
         
-        i=0;
-        while(i<lsize){
-            proc(receiver,elements[i],obj);
-            INC(i);
-        }
-        return(this);
-    }//withEachMake:perform:andWith:;
+    i=0;
+    while(i<lsize){
+        proc(receiver,elements[i],obj);
+        INC(i);
+    }
+    return(this);
+}//withEachMake:perform:andWith:;
         
 //END BpArray.

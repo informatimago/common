@@ -27,7 +27,7 @@ MODIFICATIONS
     Initial revision
     
 LEGAL
-    Copyright Pascal J. Bourguignon 1995 - 2002
+    Copyright Pascal J. Bourguignon 1995 - 2011
 
     This file is part of the bplib library..
 

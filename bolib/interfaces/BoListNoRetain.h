@@ -17,7 +17,7 @@ AUTHOR
 MODIFICATIONS
     1996/09/17 <PJB> Creation (from BoList, which becomes a subclass).
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 1996
+    Copyright Pascal J. Bourguignon 1992 - 2011
     All rights reserved.
     This program may not be included in any commercial product without the 
     author written permission. It may be used freely for any non-commercial 

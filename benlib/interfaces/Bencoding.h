@@ -15,7 +15,7 @@ MODIFICATIONS
 LEGAL
     GPL
     
-    Copyright Pascal J. Bourguignon 1991 - 2003
+    Copyright Pascal J. Bourguignon 1991 - 2011
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License

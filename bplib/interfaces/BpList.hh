@@ -38,7 +38,7 @@ MODIFICATIONS
                     in the same sources.
     1994-12-30 <PJB> Added sort.
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 2002
+    Copyright Pascal J. Bourguignon 1992 - 2011
 
     This file is part of the bplib library..
 

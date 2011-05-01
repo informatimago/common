@@ -21,7 +21,7 @@
 #LEGAL
 #    GPL
 #    
-#    Copyright Pascal Bourguignon 1992 - 2003
+#    Copyright Pascal Bourguignon 1992 - 2011
 #    
 #    This program is free software; you can redistribute it and/or
 #    modify it under the terms of the GNU General Public License

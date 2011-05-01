@@ -32,7 +32,7 @@ MODIFICATIONS
                     This is needed for we can mix Objective-C with CPlusPlus
                     in the same sources.
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 2002
+    Copyright Pascal J. Bourguignon 1992 - 2011
 
     This file is part of the bclib library.
 
@@ -72,7 +72,7 @@ LEGAL
     PROCEDURE(BcRAISE,(INT32 code,const void* data1,const void* data2),void)
     {
         if(BcTRY_CurrentEnvironment==NIL){
-            fprintf(stderr,"BpExcept_BcRAISE: Uncatched exception code=%ld data1=%p data2=%p\n",code,data1,data2);
+            fprintf(stderr,"BpExcept_BcRAISE: Uncatched exception code=%"FMT_INT32"data1=%p data2=%p\n",code,data1,data2);
 #ifdef UNIX                       
             /* We use a kill instead of exit to let the debugger catch it here. */
             signal(SIGQUIT,SIG_DFL);

@@ -18,7 +18,7 @@ MODIFICATIONS
     Updated with changes from MAPTREE on bclib/bplib/makedir.
     
 LEGAL
-    Copyright Pascal J. Bourguignon 1996 - 1996
+    Copyright Pascal J. Bourguignon 1996 - 2011
     All rights reserved.
     This program may not be included in any commercial product without the 
     author written permission. It may be used freely for any non-commercial 

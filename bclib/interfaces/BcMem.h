@@ -28,7 +28,7 @@ MODIFICATIONS
                     in the same sources.
     1993-12-06 <PJB> Added Fill.
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 2002
+    Copyright Pascal J. Bourguignon 1992 - 2011
 
     This file is part of the bclib library.
 

@@ -34,7 +34,7 @@ BUGS
 LEGAL
     GPL
     
-    Copyright Pascal J. Bourguignon     1993 - 2003
+    Copyright Pascal J. Bourguignon 1993 - 2011
     
     This program is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License
@@ -64,7 +64,7 @@ LEGAL
     const char bjstring_id[]=
     "$Id: bjstring.c,v 1.2 2004/10/27 03:38:20 pupjb Exp $";
 
-    static const int AllocIncrement=128;
+    static const unsigned int AllocIncrement=128;
 
 /*
     INVARIANTS:
@@ -155,12 +155,12 @@ LEGAL
     bjstring_t*  bjstring_new_repeat(const char* string,unsigned int count)
     {
         bjstring_t* that=bjstring_new();
-        unsigned int length=strlen(string);
-        unsigned int pos=0;
+        size_t length=strlen(string);
+        size_t pos=0;
         if(count<0){
             count=0;
         }
-        bjstring_set_capacity_copy(that,length*count,no);
+        bjstring_set_capacity_copy(that,(unsigned int)(length*count),no);
         while(count>0){
             memmove(/*dst*/that->data+pos,
                     /*src*/string,
@@ -168,7 +168,7 @@ LEGAL
             pos+=length;
             count--;
         }
-        that->length=pos;
+        that->length=(unsigned int)pos;
         that->data[that->length]='\0';
         return(that);
     }/*bjstring_new_repeat*/
@@ -276,7 +276,7 @@ LEGAL
 
     void bjstring_set_string(bjstring_t* that,const char* nString)
     {
-        bjstring_set_chars(that,nString,strlen(nString));
+        bjstring_set_chars(that,nString,(unsigned int)strlen(nString));
     }/*set_string*/
 
 
@@ -295,8 +295,8 @@ LEGAL
 
     void bjstring_append_string(bjstring_t* that,const char* str)
     {
-        unsigned int    nLength;
-        unsigned int    sLength;
+        size_t    nLength;
+        size_t    sLength;
 
         if((that==0)||(str==0)){
             return;
@@ -304,13 +304,13 @@ LEGAL
         sLength=strlen(str);
         nLength=that->length+sLength;
         if(nLength>=that->allocation){
-            bjstring_set_capacity_copy(that,nLength,yes);
+            bjstring_set_capacity_copy(that,(unsigned int)nLength,yes);
         }
         if(that->data!=empty_data){
             memmove(/*dst*/that->data+that->length,
                     /*src*/str,
                     /*len*/sizeof(*(that->data))*sLength);
-            that->length=nLength;
+            that->length=(unsigned int)nLength;
             that->data[that->length]='\0';
         }
     }/*bjstring_append_string*/
@@ -342,8 +342,7 @@ LEGAL
                 }
             }else if(idx==that->length){
                 if(that->allocation<=that->length+1){
-                    bjstring_set_capacity_copy(
-                        that,that->allocation+AllocIncrement,yes);
+                    bjstring_set_capacity_copy(that,that->allocation+AllocIncrement,yes);
                 }
                 that->data[idx]=nChar;
                 that->length++;
@@ -690,8 +689,8 @@ LEGAL
         */
     {
         va_list save_ap;
-        int available; /* to vsnprintf ; up to then, it's "willBeNeeded". */
-        int formatlen;
+        size_t available; /* to vsnprintf ; up to then, it's "willBeNeeded". */
+        size_t formatlen;
         int inc;
         bool firstTime=yes; 
         va_copy(save_ap,ap);
@@ -716,9 +715,9 @@ LEGAL
                 }
             }else{
                 /* We know exactly how many bytes are needed. */
-                available=inc+1;
+                available=(unsigned int)(inc+1);
             }
-            bjstring_set_capacity_copy(that,that->length+available,yes);
+            bjstring_set_capacity_copy(that,(unsigned int)(that->length+available),yes);
             ap=save_ap;
             /*
                 We would like to do something like {va_start(ap,format);}
@@ -729,7 +728,7 @@ LEGAL
                           (unsigned)available,format,ap);
             /* va_end(ap); */
         }while((inc<0)||(available<=inc));
-        that->length+=inc;
+        that->length+=(unsigned int)inc;
     }/*bjstring_set_format_va*/
 
 

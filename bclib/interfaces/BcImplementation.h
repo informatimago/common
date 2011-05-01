@@ -63,7 +63,7 @@ MODIFICATIONS
     2002-01-31 <PJB> Added #undef for all macro defined 
                      either here or in BcInterface.h
 LEGAL
-    Copyright Pascal J. Bourguignon 1989 - 2002
+    Copyright Pascal J. Bourguignon 1989 - 2011
 
     This file is part of the bclib library.
 

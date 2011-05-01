@@ -54,7 +54,7 @@ MODIFICATIONS
                     This is needed for we can mix Objective-C with CPlusPlus
                     in the same sources.
 LEGAL
-    Copyright Pascal J. Bourguignon 1989 - 2002
+    Copyright Pascal J. Bourguignon 1989 - 2011
 
     This file is part of the bclib library.
 

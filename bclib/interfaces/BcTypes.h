@@ -45,7 +45,7 @@ MODIFICATIONS
                     This is needed for we can mix Objective-C with CPlusPlus
                     in the same sources.
 LEGAL
-    Copyright Pascal J. Bourguignon 1989 - 2002
+    Copyright Pascal J. Bourguignon 1989 - 2011
 
     This file is part of the bclib library.
 
@@ -68,28 +68,109 @@ LEGAL
 #define inhibit_inhibit_BcTypes_h
 #include <limits.h> /* import CHAR_BIT */
 
+#define HAS_STDINT
+#ifdef HAS_STDINT
+#define __STDC_LIMIT_MACROS
+#include <stdint.h>
+
+typedef intptr_t            INTPTR; /* A INT of the same size as a void* */
+typedef int64_t             INT64;
+typedef int32_t             INT32;
+typedef int16_t             INT16;
+typedef int8_t              INT8;
+typedef uintptr_t           CARDPTR; /* A CARD of the same size as a void* */
+typedef uint64_t            CARD64;
+typedef uint32_t            CARD32;
+typedef uint16_t            CARD16;
+typedef uint8_t             CARD8;
+
+
+#define FMT_INTPTR              "p"
+#define FMT_INT64               "ld"
+#define FMT_INT32               "d"
+#define FMT_INT16               "d"
+#define FMT_INT8                "d"
+
+#define FMT_CARDPTR             "p"
+#define FMT_CARD64              "lu"
+#define FMT_CARD32              "u"
+#define FMT_CARD16              "u"
+#define FMT_CARD8               "u"
+
+#define FMT_INTPTR_HEX          "x"
+#define FMT_INT64_HEX           "lx"
+#define FMT_INT32_HEX           "x"
+#define FMT_INT16_HEX           "x"
+#define FMT_INT8_HEX            "x"
+
+#define FMT_CARDPTR_HEX         "x"
+#define FMT_CARD64_HEX          "lx"
+#define FMT_CARD32_HEX          "x"
+#define FMT_CARD16_HEX          "x"
+#define FMT_CARD8_HEX           "x"
+
+
+#define MIN_INT64           INT64_MIN
+#define MAX_INT64           INT64_MAX
+#define MAX_CARD64          UINT64_MAX
+#define MIN_INT32           INT32_MIN
+#define MAX_INT32           INT32_MAX
+#define MAX_CARD32          UINT32_MAX
+#define MIN_INT16           INT16_MIN
+#define MAX_INT16           INT16_MAX
+#define MAX_CARD16          UINT16_MAX
+#define MIN_INT8            INT8_MIN
+#define MAX_INT8            INT8_MAX
+#define MAX_CARD8           UINT8_MAX
+
+#else
+
 #ifdef _WIN32
-    typedef __int64                 INT64;
-    typedef unsigned __int64        CARD64;
+typedef __int64                 INT64;
+typedef unsigned __int64        CARD64;
 #else
 #if 0
-        /* long long is not ISO C */
-    typedef long long int           INT64;
-    typedef unsigned long long int  CARD64;
+/* long long is not ISO C */
+typedef long long int           INT64;
+typedef unsigned long long int  CARD64;
 #endif
 #endif
-    typedef long int                INT32;
-    typedef short int               INT16;
-    typedef char                    INT8;
-    typedef unsigned long int       CARD32;
-    typedef unsigned short int      CARD16;
-    typedef unsigned char           CARD8;
-    typedef int                     SignT;  /* [ -1, 0,  +1 ] */
-    typedef unsigned char           CHAR;
-    typedef CARD16                  UNICODE;
-    typedef double                  DECIMAL;
-    typedef void*                   ADDRESS;
+typedef long int                INTPTR; /* A CARD of the same size as a void* */
+typedef long int                INT32;
+typedef short int               INT16;
+typedef char                    INT8;
+typedef unsigned long int       CARDPTR; /* A CARD of the same size as a void* */
+typedef unsigned long int       CARD32;
+typedef unsigned short int      CARD16;
+typedef unsigned char           CARD8;
 
+#define FMT_INTPTR              "p"
+#define FMT_INT64               "ld"
+#define FMT_INT32               "d"
+#define FMT_INT16               "d"
+#define FMT_INT8                "d"
+
+#define FMT_CARDPTR             "p"
+#define FMT_CARD64              "lu"
+#define FMT_CARD32              "u"
+#define FMT_CARD16              "u"
+#define FMT_CARD8               "u"
+
+#define FMT_INTPTR_HEX          "x"
+#define FMT_INT64_HEX           "lx"
+#define FMT_INT32_HEX           "x"
+#define FMT_INT16_HEX           "x"
+#define FMT_INT8_HEX            "x"
+
+#define FMT_CARDPTR_HEX         "x"
+#define FMT_CARD64_HEX          "lx"
+#define FMT_CARD32_HEX          "x"
+#define FMT_CARD16_HEX          "x"
+#define FMT_CARD8_HEX           "x"
+
+#define MIN_INT64           ((INT64)0x8000000000000000)
+#define MAX_INT64           ((INT64)0x7fffffffffffffff)
+#define MAX_CARD64          ((CARD64)0xffffffffffffffff)
 #define MIN_INT32           ((INT32)0x80000000)
 #define MAX_INT32           ((INT32)0x7fffffff)
 #define MAX_CARD32          ((CARD32)0xffffffff)
@@ -100,9 +181,18 @@ LEGAL
 #define MAX_INT8            ((INT32)0x7f)
 #define MAX_CARD8           ((CARD32)0xff)
 
-    typedef CHAR                CSTRING255[256];
-    typedef CHAR                CSTRING63[64];
-    typedef CHAR                CSTRING31[32];
+#endif
+
+
+typedef int                     SignT;  /* [ -1, 0,  +1 ] */
+typedef double                  DECIMAL;
+typedef void*                   ADDRESS;
+typedef CARD32                  UNICODE;
+typedef unsigned char           CHAR;
+
+typedef CHAR                    CSTRING255[256];
+typedef CHAR                    CSTRING63[64];
+typedef CHAR                    CSTRING31[32];
 
 #undef NIL
 #define NIL                 (0) /*((void*)(0))*/
@@ -118,14 +208,15 @@ LEGAL
 #else
 #undef  TRUE
 #undef  FALSE
-    typedef enum {FALSE=0,TRUE} BOOLEAN;
+typedef enum {FALSE=0,TRUE} BOOLEAN;
 #endif
 
 
 #define INC(i)       (++(i))
 #define DEC(i)       (--(i))
-#define INCR(i,n)    ((i)+=(n))
-#define DECR(i,n)    ((i)-=(n))
+#define TYPEOF(i)    typeof(i)
+#define INCR(i,n)    ((i)=((TYPEOF(i))((i)+(n))))
+#define DECR(i,n)    ((i)=((TYPEOF(i))((i)-(n))))
 #ifndef ODD
 #define ODD(i)       ((((CARD32)(i))&1)!=0)
 #endif

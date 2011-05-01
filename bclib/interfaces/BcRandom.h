@@ -34,7 +34,7 @@ MODIFICATIONS
     1993-09-08 <PJB> Removed RANDOMFILE. Now, the random file path is found 
                      from the environment variable.  
 LEGAL
-    Copyright Pascal J. Bourguignon 1990 - 2002
+    Copyright Pascal J. Bourguignon 1990 - 2011
 
     This file is part of the bclib library.
 

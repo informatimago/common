@@ -35,7 +35,7 @@ MODIFICATIONS
                     This is needed for we can mix Objective-C with CPlusPlus
                     in the same sources.
 LEGAL
-    Copyright Pascal J. Bourguignon 1993 - 2002
+    Copyright Pascal J. Bourguignon 1993 - 2011
 
     This file is part of the bplib library..
 
@@ -83,22 +83,21 @@ public:
 
 // BpString methods:
 
-    METHOD(BpString,length,(void),INT32)
+    METHOD(BpString,length,(void),CARD32)
     METHOD(BpString,string,(void),const char*)
     METHOD(BpString,setString,(const char* nString),BpString*)
     METHOD(BpString,getString,(char* string),BpString*)
-    METHOD(BpString,setStringNoCopy,(char* data,INT32 byteCount),void)
+    METHOD(BpString,setStringNoCopy,(char* data,CARD32 byteCount),void)
 
-    METHOD(BpString,charAt,(INT32 index),char)
-    METHOD(BpString,setCharAt,(char nChar,INT32 index),BpString*)
+    METHOD(BpString,charAt,(CARD32 index),char)
+    METHOD(BpString,setCharAt,(char nChar,CARD32 index),BpString*)
     
     METHOD(BpString,compare,(BpString* otherString),SignT)
-    METHOD(BpString,insertAt,(BpString* substring,INT32 index),BpString*)
-    METHOD(BpString,deleteFromLength,(INT32 index,INT32 delen),BpString*)
-    METHOD(BpString,positionFrom,(BpString* substring,INT32 index),INT32)
+    METHOD(BpString,insertAt,(BpString* substring,CARD32 index),BpString*)
+    METHOD(BpString,deleteFromLength,(CARD32 index,CARD32 delen),BpString*)
+    METHOD(BpString,positionFrom,(BpString* substring,CARD32 index),CARD32)
     METHOD(BpString,copyFrom,(BpString* source),BpString*)
-    METHOD(BpString,copyFromLength,
-            (BpString* string,INT32 index,INT32 copylen),BpString*)
+    METHOD(BpString,copyFromLength,(BpString* string,CARD32 index,CARD32 copylen),BpString*)
     METHOD(BpString,append,(BpString* tail),BpString*)
     METHOD(BpString,appendString,(const char* nString),BpString*)
     
@@ -116,11 +115,11 @@ public:
 
 protected:
     char*           data;
-    INT32           dlength;
-    INT32           allocation;
-    METHOD(BpString,setCapacityCopy,(INT32 nAllocation,BOOLEAN copy),BpString*)
+    CARD32          dlength;
+    CARD32          allocation;
+    METHOD(BpString,setCapacityCopy,(CARD32 nAllocation,BOOLEAN copy),BpString*)
     METHOD(BpString,_insertStringAt,
-                    (const char* sString,INT32 sLength,INT32 index),BpString*)
+                    (const char* sString,CARD32 sLength,CARD32 index),BpString*)
 };//BpString
 
 

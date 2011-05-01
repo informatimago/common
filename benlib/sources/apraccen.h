@@ -21,7 +21,7 @@ MODIFICATIONS
     Fist check-in.
     
 LEGAL
-    Copyright Pascal J. Bourguignon 1991 - 1999
+    Copyright Pascal J. Bourguignon 1991 - 2011
     All Rights Reserved.
     This program may not be included in any commercial product without the 
     author written permission. It may be used freely for any non-commercial 

@@ -10,7 +10,7 @@ AUTHORS
 MODIFICATIONS
     1991-03-31 <PJB> Translated from Modula-2 to C.
 LEGAL
-    Copyright Pascal J. Bourguignon 1990 - 2002
+    Copyright Pascal J. Bourguignon 1990 - 2011
 
     This file is part of the bclib library.
 

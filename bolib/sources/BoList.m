@@ -20,7 +20,7 @@ MODIFICATIONS
     1993/03/19 <PJB> Updated to use newly Bc- prefixed interfaces.
     1996/04/20 <PJB> Updated to use retain/release BoObjects.
 LEGAL
-    Copyright Pascal J. Bourguignon 1992 - 1996
+    Copyright Pascal J. Bourguignon 1992 - 2011
     All rights reserved.
     This program may not be included in any commercial product without the 
     author written permission. It may be used freely for any non-commercial 
