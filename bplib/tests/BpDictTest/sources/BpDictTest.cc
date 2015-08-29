@@ -66,7 +66,7 @@ extern"C"{
         s=a->size();
         for(i=0;i<s;i++){
             element=(BpString*)(a->objectAt(i));
-            printf("        %s[%ld]=%s\n",name,i,element->string());
+            printf("        %s[%u]=%s\n",name,i,element->string());
         }
         BpObject_ProcessDeletePool();
     }//AP;
@@ -79,7 +79,7 @@ extern"C"{
             CARD32          c;
             CARD32          i;
             
-        printf("%p %s count = %ld\n",(void*)d,d->className(),d->count());
+        printf("%p %s count = %u\n",(void*)d,d->className(),d->count());
         keys=d->allKeys();
         keys->retain();
         AP(keys,"keys");
@@ -88,10 +88,10 @@ extern"C"{
         AP(values,"values");
         c=keys->size();
         if(c!=d->count()){
-            printf("%p %s  returned a key array with %ld elements while it said it contains %ld entries.\n",(void*)d,d->className(),c,d->count());
+            printf("%p %s  returned a key array with %u elements while it said it contains %u entries.\n",(void*)d,d->className(),c,d->count());
         }
         if(c!=values->size()){
-            printf("%p %s  returned a key array with %ld elements and a values array with %ld elements (this may be normal).\n",(void*)d,d->className(),c,values->size());
+            printf("%p %s  returned a key array with %u elements and a values array with %u elements (this may be normal).\n",(void*)d,d->className(),c,values->size());
         }
         for(i=0;i<c;i++){
                 BpString*       value;
