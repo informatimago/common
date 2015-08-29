@@ -42,7 +42,8 @@ RANLIB				=	ranlib
 RANLIBFLAGS         =   -s
 
 ## Support for C / Objective-C:
-CC					=	/usr/bin/cc
+#CC					=	/usr/bin/cc
+CC					=	gcc
 CFLAGS				=	$(TARGET_CFLAGS)
 CCMAKEDEPENDS		=	$(CC) -M $(INCLUDES)
 .SUFFIXES:: .o .h .c .m 

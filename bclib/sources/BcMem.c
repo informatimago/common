@@ -66,6 +66,7 @@ LEGAL
 /* application*/
 #include <names.h>
 #include BcMem_h
+#include BcTypes_h
 #include BcExcept_h
 #include BcImplementation_h
 
