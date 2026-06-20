@@ -26,6 +26,32 @@ LEGAL
 #include <BcTypes.h>
 @class BoListNoRetain;
 
+/*
+    Compatibility category.
+
+    bolib was written against the legacy GCC/NeXT `Object' root class, which
+    provided a rich set of methods (+alloc, -init, -free, -name, -error:,
+    -perform:...).  Modern libobjc (GNU runtime) ships a minimal `Object'
+    declaring only -class and -isEqual:, so those methods bit-rotted away.
+
+    This category re-implements, on `Object' itself, exactly the legacy
+    methods bolib relies on, using the modern objc runtime.  It is declared
+    here (BoObject.h is included by every bolib interface) and implemented in
+    BoObject.m (the root class is always pulled into any link, so the
+    category is never dropped from the static archive).
+*/
+@interface Object (BoCompat)
+    +(id)alloc;
+    -(id)init;
+    -(id)free;
+    +(const char*)name;
+    -(const char*)name;
+    -(id)error:(const char*)format,...;
+    -(id)perform:(SEL)aSelector;
+    -(id)perform:(SEL)aSelector with:(id)anObject;
+    -(id)perform:(SEL)aSelector with:(id)anObject with:(id)another;
+@end
+
 @interface BoObject:Object
 {
     long                _useCount;

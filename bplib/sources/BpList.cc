@@ -188,7 +188,7 @@ extern "C"{
             newCapacity=BpList_Minimum;
         }
         if(lcount>newCapacity){
-            BcRAISE(BpList_eCapacityTooLow,(void*)this,(void*)newCapacity);
+            BcRAISE(BpList_eCapacityTooLow,(void*)this,(void*)(size_t)newCapacity);
         }else{
             newElements=(BpObject**)BcMem_Allocate((CARD32)sizeof(BpObject*)*newCapacity);
             i=0;
@@ -213,7 +213,7 @@ extern "C"{
     METHOD(BpList,objectAt,(CARD32 index),BpObject*)
     {
         if(index>=lcount){
-            BcRAISE(BpList_eBadIndex,(void*)this,(void*)index);
+            BcRAISE(BpList_eBadIndex,(void*)this,(void*)(size_t)index);
         }
         return(elements[index]);
     }//objectAt:;
@@ -273,7 +273,7 @@ extern "C"{
             BpObject*           oldObject;
             
         if(index>=lcount){
-            BcRAISE(BpList_eBadIndex,(void*)this,(void*)index);
+            BcRAISE(BpList_eBadIndex,(void*)this,(void*)(size_t)index);
         }
         oldObject=elements[index];
         while(index<lcount){
@@ -310,7 +310,7 @@ extern "C"{
             BcRAISE(BpList_eNilObject,(void*)this,NIL);
         }
         if(index>=lcount){
-            BcRAISE(BpList_eBadIndex,(void*)this,(void*)index);
+            BcRAISE(BpList_eBadIndex,(void*)this,(void*)(size_t)index);
         }
         oldObject=elements[index];
         elements[index]=nObj;

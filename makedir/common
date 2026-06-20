@@ -183,7 +183,7 @@ version.h :: VERSION
 # 	@echo I="$(INTERFACES)" 
 # 	@echo D="$(DOCUMENTATION)" 
 # 	@echo M="$(MANPAGES)" 
-install :: 
+install :: all
 	@[ -z "$(PROGRAMS)" ] \
 	|| ( umask 022 ;\
 		 mkdir -p $(BINIDIR) 2>/dev/null || true ;\

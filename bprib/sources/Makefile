@@ -68,6 +68,9 @@ CPLUSSOURCES=\
 INCLUDES=\
 	-I../sources \
 	-I../interfaces \
+	-I../.. \
+	-I../../bclib/interfaces \
+	-I../../bplib/interfaces \
 	-I$(PREFIX)/lib \
 	-I$(PREFIX)/lib/bclib/interfaces \
 	-I$(PREFIX)/lib/bplib/interfaces \

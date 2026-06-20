@@ -199,7 +199,7 @@ METHOD(BpArray,resize,(CARD32 newSize),BpArray*)
 METHOD(BpArray,objectAt,(CARD32 index),BpObject*)
 {
     if(index>=lsize){
-        BcRAISE(BpArray_eBadIndex,(void*)this,(void*)index);
+        BcRAISE(BpArray_eBadIndex,(void*)this,(void*)(size_t)index);
     }
     return(elements[index]);
 }//objectAt:;
@@ -211,7 +211,7 @@ METHOD(BpArray,replaceObjectAtWith,
     BpObject*           old;
             
     if(index>=lsize){
-        BcRAISE(BpArray_eBadIndex,(void*)this,(void*)index);
+        BcRAISE(BpArray_eBadIndex,(void*)this,(void*)(size_t)index);
     }
     old=elements[index];
     elements[index]=newObject;
@@ -231,7 +231,7 @@ METHOD(BpArray,insertObjectAt,(BpObject* newObject,CARD32 index),BpArray*)
     CARD32              i;
             
     if(index>=lsize){
-        BcRAISE(BpArray_eBadIndex,(void*)this,(void*)index);
+        BcRAISE(BpArray_eBadIndex,(void*)this,(void*)(size_t)index);
     }
     i=lsize-1;
     while(i>index){
@@ -253,7 +253,7 @@ METHOD(BpArray,removeObjectAt,(CARD32 index),BpObject*)
     BpObject*           old;
             
     if(index>=lsize){
-        BcRAISE(BpArray_eBadIndex,(void*)this,(void*)index);
+        BcRAISE(BpArray_eBadIndex,(void*)this,(void*)(size_t)index);
     }
     old=elements[index];
     i=index;

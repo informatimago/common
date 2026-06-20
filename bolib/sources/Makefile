@@ -70,6 +70,8 @@ CPLUSSOURCES=
 INCLUDES=\
 	-I. \
 	-I../interfaces \
+	-I../.. \
+	-I../../bclib/interfaces \
 	-I$(PREFIX)/lib/bclib/interfaces \
 	$(TARGET_INCLUDES)
 

@@ -20,6 +20,77 @@ LEGAL
 ******************************************************************************/
 #include <BoObject.h>
 #include <BoListNoRetain.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <objc/runtime.h>
+#include <objc/message.h>
+
+
+/*
+    Re-implementation of the legacy `Object' root-class methods bolib needs.
+    See the BoCompat category declaration in BoObject.h for the rationale.
+*/
+@implementation Object (BoCompat)
+
+    +(id)alloc
+    {
+        return(class_createInstance(self,0));
+    }/*alloc;*/
+
+    -(id)init
+    {
+        return(self);
+    }/*init;*/
+
+    -(id)free
+    {
+        return(object_dispose(self));
+    }/*free;*/
+
+    +(const char*)name
+    {
+        return(class_getName(self));
+    }/*name;*/
+
+    -(const char*)name
+    {
+        return(object_getClassName(self));
+    }/*name;*/
+
+    -(id)error:(const char*)format,...
+    {
+            va_list     args;
+
+        va_start(args,format);
+        fprintf(stderr,"error: %s: ",object_getClassName(self));
+        vfprintf(stderr,format,args);
+        va_end(args);
+        abort();
+        return(nil);
+    }/*error:;*/
+
+    -(id)perform:(SEL)aSelector
+    {
+            IMP     imp=objc_msg_lookup(self,aSelector);
+
+        return(imp(self,aSelector));
+    }/*perform:;*/
+
+    -(id)perform:(SEL)aSelector with:(id)anObject
+    {
+            IMP     imp=objc_msg_lookup(self,aSelector);
+
+        return(imp(self,aSelector,anObject));
+    }/*perform:with:;*/
+
+    -(id)perform:(SEL)aSelector with:(id)anObject with:(id)another
+    {
+            IMP     imp=objc_msg_lookup(self,aSelector);
+
+        return(imp(self,aSelector,anObject,another));
+    }/*perform:with:with:;*/
+
+@end
 
 @interface DeletePool:Object
 {

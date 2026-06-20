@@ -197,7 +197,7 @@ METHOD(DeletePool,removeObject,(BpObject* obj),void)
             return;
         }
     }
-    BcRAISE(BpObject_eDeleteInternal,obj,(void*)1);
+    BcRAISE(BpObject_eDeleteInternal,obj,(void*)(size_t)1);
 }//removeObject;
     
     
@@ -262,7 +262,7 @@ DESTRUCTOR(BpObject)
     fprintf(stderr,"%p %s [%d] destruction.\n",(void*)this,this->className(),fRetainCount);
 #endif
     if(fRetainCount!=0){
-        BcRAISE(BpObject_eDeleteRetained,(void*)this,(void*)fRetainCount);
+        BcRAISE(BpObject_eDeleteRetained,(void*)this,(void*)(size_t)fRetainCount);
     }
 }//~BpObject;
 

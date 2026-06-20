@@ -76,7 +76,7 @@ LEGAL
     {
         va_list parameters;
         va_start(parameters,format);
-        fprintf(file,"%*s%-16s[%4"FMT_CARD32"]=",asSize(level),"",name,index);
+        fprintf(file,"%*s%-16s[%4" FMT_CARD32 "]=",asSize(level),"",name,index);
         vfprintf(file,format,parameters);
         fprintf(file,"\n");
         va_end(parameters);
