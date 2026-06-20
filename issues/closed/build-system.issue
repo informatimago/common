@@ -2,7 +2,33 @@
 #+TITLE: build system: correctness, parallelism, portability
 #+DATE: 2026-06-20
 
-* TODO [#B] makedir: build-system correctness + portability  :build:make:
+* DONE [#B] makedir: build-system correctness + portability  :build:make:
+  RESOLUTION (2026-06-20):
+  - ifeq (`uname`,...): fixed the remaining instances to ifeq ($(TARGET),...)
+    (bolib's was fixed with the POSIX-timer work; bplib's commented block here).
+  - targetLinux: de-hardcoded /usr/bin/gcc, /usr/bin/g++ to gcc/g++ (honour
+    $PATH); LD now defaults to $(CCPLUS) so C++/Objective-C programs link with
+    the C++ driver (and its runtime) instead of the C driver.
+  - Added an "uninstall" target (registered in common-targets, implemented in
+    makedir/common): removes $(PREFIX)/lib/$(MODULE) and the module's installed
+    programs, guarded so an empty PREFIX/MODULE can never expand to a
+    destructive rm. Validated: make uninstall removes all 7 modules' trees.
+  Verified the full clean build still produces all 7 libraries with the new
+  compiler settings.
+
+  DEFERRED (intentionally not changed --- the single-pass "make depend; make;
+  make install" works, and these are riskier refactors that could destabilise it):
+  - Making Makefile.depend a restartable include and adding inter-module
+    dependencies so "make -j" is safe across modules. For now the documented
+    sequence is single-threaded.
+  - Replacing the apply/"gcc -M" dependency generation with "$(CC) -MM -MT".
+  - Removing the "|| true" that masks install failures (changing it risks
+    breaking installs on systems with unusual permissions).
+  - Deleting the obsolete library/program/*-template makefiles and the stale
+    ribtest Makefile; the %:%.c / %:%.cc single-source link patterns.
+  The makedir/README staleness is tracked in doc-readme-fixes.
+
+== Original findings ==
 
 Already fixed (do not re-do): absolute =APPLY=$(MAKEDIR)/apply=; =install:: all=;
 cross-module =-I= paths; =MAKEDIR=/=COMMON= derived from the Makefile's own path

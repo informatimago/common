@@ -39,7 +39,7 @@ LINE2="========================================================================"
 LINE3="------------------------------------------------------------------------"
 LINE3="........................................................................"
 
-COMMON_TARGETS = all install  \
+COMMON_TARGETS = all install uninstall  \
 				 clean cleanall distclean cvsclean  \
 				 depend showvars help \
 				 conflicts

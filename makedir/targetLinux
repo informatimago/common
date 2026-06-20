@@ -49,13 +49,13 @@ RANLIBFLAGS         =
 
 ## Linking:
 LDFLAGS             = $(TARGET_LDFLAGS)
-LD                  = $(CC)
+LD                  = $(CCPLUS)
 # LD depends on the languages and compilers used.
 
 
 
 ## Support for C:
-CC					=	/usr/bin/gcc
+CC					=	gcc
 CFLAGS				=	$(TARGET_CFLAGS)
 CCMAKEDEPENDS		=	$(CC) -M $(INCLUDES)
 .SUFFIXES:: .o .c
@@ -65,7 +65,7 @@ CCMAKEDEPENDS		=	$(CC) -M $(INCLUDES)
 	$(CC) $(CFLAGS) $(INCLUDES) $< $(LDFLAGS) $(LIBRARIES) -o $@
 
 ## Support for Objective-C:
-OBJC				=	/usr/bin/gcc -x objective-c
+OBJC				=	gcc -x objective-c
 OBJCFLAGS			=	$(TARGET_OBJCFLAGS)
 OBJCMAKEDEPENDS		=	$(OBJC) -M $(INCLUDES)
 .SUFFIXES:: .o .m
@@ -75,7 +75,7 @@ OBJCMAKEDEPENDS		=	$(OBJC) -M $(INCLUDES)
 	$(OBJC) $(OBJCFLAGS) $(INCLUDES) $< $(LDFLAGS) $(LIBRARIES) -o $@
 
 ## Support for C++:
-CCPLUS				=	/usr/bin/g++
+CCPLUS				=	g++
 CPLUSFLAGS			=	$(TARGET_CPLUSFLAGS)
 CCPLUSMAKEDEPENDS	=	$(CCPLUS) -M $(INCLUDES)
 .SUFFIXES:: .o .cc 

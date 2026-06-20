@@ -81,7 +81,7 @@ CPLUSSOURCES=\
 	BpString.cc \
 	PrintOnLevel.cc
 
-ifeq (`uname`,Linux)
+ifeq ($(TARGET),Linux) # backticks inside ifeq do not run a shell; use $(TARGET).
 #   BpTimer-Linux.cc
 endif
 
