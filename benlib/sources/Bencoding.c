@@ -397,13 +397,15 @@ LEGAL
             }
         }
         ml++;
-        
+
         ml=sizeof(buffer)-ml; /* the limit in the buffer */
+
+        i=0; /* the measuring loop above left i==256; restart at the input. */
 
         if(ml<=1){
             /* degenerated case, let's do it anyway */
             while(string[i]!='\0'){
-                BcString_AppendString(result,(*table)[(int)(string[i])]);
+                BcString_AppendString(result,(*table)[(unsigned char)(string[i])]);
                 i++;
             }
             return(result);
@@ -412,16 +414,17 @@ LEGAL
         while(string[i]!='\0'){
             int j=0;
             while((string[i]!='\0')&&(j<ml)){
-                const char* converted=(*table)[(int)(string[i])];
+                const char* converted=(*table)[(unsigned char)(string[i])];
                 while((*converted)!='\0'){
                     buffer[j++]=(*converted);
                     converted++;
                 }
+                i++; /* advance to the next input character. */
             }
             buffer[j]='\0';
             BcString_AppendString(result,buffer);
         }
-        return(result);        
+        return(result);
     }/*BenConvertString*/
 
 

@@ -2,7 +2,12 @@
 #+TITLE: benlib: BenConvertString is broken (critical)
 #+DATE: 2026-06-20
 
-* TODO [#A] benlib: fix BenConvertString  :critical:benlib:memory:
+* DONE [#A] benlib: fix BenConvertString  :critical:benlib:memory:
+  RESOLUTION (2026-06-20): Reset =i=0= after the measuring loop, advance =i= in
+  the conversion loop, and index the table with =(unsigned char)= in both the
+  main and degenerate paths (Bencoding.c). Validated with a unit test converting
+  a string containing a high byte (0xE9) through a table — output correct, no
+  out-of-bounds access.
 
 Severity: *critical* — wrong results and memory-unsafe.
 
