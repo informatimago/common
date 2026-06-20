@@ -76,3 +76,20 @@ implementation (BoArray.m:119-124) explicitly handles shrinking. Fix the header.
 3. Give getString: a size parameter; bound position:from:.
 4. Type the perform: IMP calls; stop routing =cause= through perform:.
 5. Decide BoTimer.posix fate (port or remove); fix the resize: doc.
+
+   DECISION:
+   - Rename the files BoTimer-posix.m  BoTimer-macintosh.m BoTimer-next.m, and
+   - implement BoTimer-posix.m on posix systems.
+
+As a general rule, file names should avoid having more than one dot; use dashes (minus-sign) as word separators in file names.
+
+
+
+
+
+
+
+
+
+
+

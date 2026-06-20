@@ -31,3 +31,5 @@ route them to BcExcept/stderr so failures are visible.
 ** Plan
 1. Replace the sprintf with snprintf + precision, or assert lengths.
 2. Decide on bignum error propagation and document it.
+
+   DECISION: Use BcExcept to make failures visible.

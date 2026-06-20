@@ -17,6 +17,8 @@ Fix options: document the constraints loudly (minimum); or make the chain
 thread-local (=__thread=/=_Thread_local=); or add a debug-mode balance assert
 that =BcRETURN*= only pops a frame it actually pushed.
 
+DECISION: make it thread-local.
+
 *** [medium] BcRandom: documented env override is dead code; unchecked fopen (BcRandom.c:148-155)
 - =fname=getenv("BcRandom_FilePath")= is read and defaulted but never used —
   every =fopen= uses the compile-time macro =RANDOMFILE=. The documented
@@ -27,6 +29,10 @@ that =BcRETURN*= only pops a frame it actually pushed.
 Fix: actually use =fname= in the =fopen= calls, reconcile the env-var name with
 the header, and NULL-check =fd= before =save=/=fseek=.
 
+DECISION:
+- use BcRandom_FilePath as environment variable. It must be used by BcRandom_fromFile().
+- use a XDG compatible default instead of "/local/lib/random.data"
+
 *** [low] Process-wide mutable state is undocumented and racy
 - =BcRandom= reads/advances/rewrites a shared seed file with no locking
   (concurrent processes clobber each other / read partial writes).
@@ -35,7 +41,11 @@ the header, and NULL-check =fd= before =save=/=fseek=.
 Fix: document "single-threaded only" for these, or add locking / caller-provided
 buffers. See doc-content-gaps for the thread-safety statement that's missing.
 
+DECISION: make the seed thread-local.  Add mutex where needed.
+
 ** Plan
 1. Decide the threading stance (document single-threaded vs. make thread-local).
 2. Fix BcRandom: use =fname=, NULL-check =fd=, reconcile the env-var name.
 3. Add the thread-safety / static-buffer caveats to the headers.
+
+   See DECISION sections above.
