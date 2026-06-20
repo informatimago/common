@@ -75,7 +75,10 @@ LEGAL
         const void*                 data2;
     }                           BcTRY_EnvironmentT;
 
-    extern BcTRY_EnvironmentP   BcTRY_CurrentEnvironment;
+    /* The TRY/HANDLER chain is per-thread (BcTHREAD_LOCAL, from BcTypes.h):
+       each thread gets its own stack of handlers so setjmp/longjmp never
+       crosses threads. */
+    extern BcTHREAD_LOCAL BcTRY_EnvironmentP   BcTRY_CurrentEnvironment;
 
 
 

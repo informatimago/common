@@ -67,7 +67,7 @@ LEGAL
     const char BcExcept_ID[]=
     "$Id: BcExcept.c,v 1.2 2004/01/02 00:59:24 pjbpjb Exp $";
 
-    BcTRY_EnvironmentP BcTRY_CurrentEnvironment=NIL;
+    BcTHREAD_LOCAL BcTRY_EnvironmentP BcTRY_CurrentEnvironment=NIL;
         
     PROCEDURE(BcRAISE,(INT32 code,const void* data1,const void* data2),void)
     {

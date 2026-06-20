@@ -2,7 +2,22 @@
 #+TITLE: bclib: exceptions reentrancy + global-state hazards
 #+DATE: 2026-06-20
 
-* TODO [#B] bclib: exception machinery + global state  :bclib:exceptions:threadsafety:
+* DONE [#B] bclib: exception machinery + global state  :bclib:exceptions:threadsafety:
+  RESOLUTION (2026-06-20), per the DECISIONs below:
+  - BcExcept: BcTRY_CurrentEnvironment is now thread-local. Added a portable
+    BcTHREAD_LOCAL macro (thread_local / _Thread_local / __thread) in BcTypes.h
+    and applied it to both the extern decl (BcExcept.h) and the definition
+    (BcExcept.c). Each thread gets its own TRY/HANDLER chain.
+  - BcRandom: BcRandom_filePath() resolves $BcRandom_FilePath, else
+    $XDG_STATE_HOME/bclib/random.data, else ~/.local/state/bclib/random.data,
+    else the compile-time RANDOMFILE; it is now used by load and save (the env
+    override was previously dead). Parent dirs are created best-effort. All file
+    handles are NULL-checked (load falls back to the built-in state; save opens
+    directly rather than freopen(NULL)). BcRandom_fromfile serialises its
+    load/advance/save under a pthread mutex; the working state X is per-call
+    (thread-local).
+  Validated: 4 threads x 20000 TRY/RAISE cycles all caught correctly (no chain
+  corruption); BcRandom_fromfile creates and uses the env-specified file.
 
 ** Findings
 

@@ -45,7 +45,10 @@ LEGAL
 ******************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/file.h>
+#include <sys/stat.h>
+#include <pthread.h>
 #include <names.h>
 #include BcRandom_h
 #include BcImplementation_h
@@ -62,6 +65,60 @@ LEGAL
 #ifdef MSDOS
 #define RANDOMFILE  "C:\\LOCAL\\LIB\\RANDOM.DAT"
 #endif
+
+
+    /* Concurrent access to the shared seed file is serialised by this mutex so
+       two threads never interleave a load/advance/save read-modify-write. */
+    static pthread_mutex_t  BcRandom_fileMutex=PTHREAD_MUTEX_INITIALIZER;
+
+
+    /*
+        Resolve the seed-file path:
+          1. $BcRandom_FilePath, if set (as documented);
+          2. else an XDG-compatible state path:
+             $XDG_STATE_HOME/bclib/random.data, or ~/.local/state/bclib/random.data;
+          3. else the compile-time RANDOMFILE.
+        The result lives in a thread-local buffer.
+    */
+    static const char* BcRandom_filePath(void)
+    {
+            static BcTHREAD_LOCAL char  path[1024];
+            const char*                 env;
+            const char*                 home;
+
+        env=getenv("BcRandom_FilePath");
+        if((env!=NIL)&&(env[0]!='\0')){
+            return(env);
+        }
+        env=getenv("XDG_STATE_HOME");
+        if((env!=NIL)&&(env[0]!='\0')){
+            snprintf(path,sizeof(path),"%s/bclib/random.data",env);
+            return(path);
+        }
+        home=getenv("HOME");
+        if((home!=NIL)&&(home[0]!='\0')){
+            snprintf(path,sizeof(path),"%s/.local/state/bclib/random.data",home);
+            return(path);
+        }
+        return(RANDOMFILE);
+    }/*BcRandom_filePath;*/
+
+
+    /* Best-effort "mkdir -p" of the parent directories of `path`. */
+    static void BcRandom_makeParentDirs(const char* path)
+    {
+            char        tmp[1024];
+            size_t      i;
+
+        snprintf(tmp,sizeof(tmp),"%s",path);
+        for(i=1;tmp[i]!='\0';i++){
+            if(tmp[i]=='/'){
+                tmp[i]='\0';
+                mkdir(tmp,0700); /* ignore EEXIST and other errors */
+                tmp[i]='/';
+            }
+        }
+    }/*BcRandom_makeParentDirs;*/
 
 
     PROCEDURE(BcRandom_random,(CARD32 X[56]),CARD32)
@@ -144,19 +201,23 @@ LEGAL
     {
             FILE*       fd;
             const char* fname;
-        
-        fname=getenv("BcRandom_FilePath");
-        if(fname==NIL){
-            fname=RANDOMFILE;
-        }
-        fd=fopen(RANDOMFILE,"r");
+
+        fname=BcRandom_filePath();
+        fd=fopen(fname,"r");
         if(fd==NIL){
-            fd=fopen(RANDOMFILE,"w+");
-            save(fd,defaultX);
-            fseek(fd,0,SEEK_SET);
+            BcRandom_makeParentDirs(fname);
+            fd=fopen(fname,"w+");
+            if(fd!=NIL){
+                save(fd,defaultX);
+                fseek(fd,0,SEEK_SET);
+            }
         }
         if(fd!=NIL){
             load(fd,X);
+        }else{
+            /* No seed file and none could be created: fall back to the built-in
+               state so the caller never reads an uninitialised X. */
+            memcpy(X,defaultX,sizeof(defaultX));
         }
         return(fd);
     }/*BcRandom_load; */
@@ -164,25 +225,36 @@ LEGAL
     
     PROCEDURE(BcRandom_save,(FILE* fd,CARD32 X[56]),void)
     {
-        fd=freopen(RANDOMFILE,"w",fd);
-        if(fd==NULL){
-            fprintf(stderr,"Warning: BcRandom cannot reopen %s\n",RANDOMFILE);
+            const char* fname=BcRandom_filePath();
+
+        if(fd==NIL){
+            /* The load could not open a handle; freopen(...,NULL) is undefined,
+               so open the file directly. */
+            fd=fopen(fname,"w");
+        }else{
+            fd=freopen(fname,"w",fd);
+        }
+        if(fd==NIL){
+            fprintf(stderr,"Warning: BcRandom cannot write %s\n",fname);
         }else{
             save(fd,X);
             fclose(fd);
         }
     }/*BcRandom_save; */
-    
+
 
     PROCEDURE(BcRandom_fromfile,(void),CARD32)
     {
             FILE*       fd;
             CARD32      X[56];
             CARD32      r;
-        
+
+        /* Serialise the whole load/advance/save against other threads. */
+        pthread_mutex_lock(&BcRandom_fileMutex);
         fd=BcRandom_load(X);
         r=BcRandom_random(X);
         BcRandom_save(fd,X);
+        pthread_mutex_unlock(&BcRandom_fileMutex);
         return(r);
     }/*BcRandom_fromfile; */
 

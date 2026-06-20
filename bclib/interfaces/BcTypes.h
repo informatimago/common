@@ -237,5 +237,14 @@ typedef enum {FALSE=0,TRUE} BOOLEAN;
 #define ULSHIFT(x,y) ((x)<<(y))
 #define BITIN(b,s)   FLAGIN(ULSHIFT(1,b),(s))
 
-#endif 
+/* Thread-local storage qualifier, spelled for C11, C++11, or (fallback) GCC. */
+#if defined(__cplusplus)
+#  define BcTHREAD_LOCAL thread_local
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+#  define BcTHREAD_LOCAL _Thread_local
+#else
+#  define BcTHREAD_LOCAL __thread
+#endif
+
+#endif
 /*** BcTypes.h                        --                     --          ***/
