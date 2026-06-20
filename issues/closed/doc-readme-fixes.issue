@@ -2,7 +2,21 @@
 #+TITLE: docs: README encoding + stale build README
 #+DATE: 2026-06-20
 
-* TODO [#C] Fix README encoding and stale makedir/README  :doc:readme:
+* DONE [#C] Fix README encoding and stale makedir/README  :doc:readme:
+  RESOLUTION (2026-06-20):
+  - Converted the top README from ISO-8859-1 to UTF-8 (iconv); "Relevés
+    d'Identité" now renders correctly. Also converted three other Latin-1 files
+    found by scanning the tree: bclib/sources/BcDefault-macintosh.c,
+    BcDefaultTest.c, and bpcombi/analysis/analysis.txt (the .rtf files were left
+    as RTF). Rebuild still green.
+  - Rewrote makedir/README to match the real conventions: MODULES (not
+    SUBPROJECT); the sources/Makefile example now uses
+    INTERFACES/CSOURCES/CPLUSSOURCES/OBJCSOURCES/INCLUDES, LIBRARIES +
+    *_OBJECTS, PROGRAMS + *_OBJECTS/*_LIBRARIES/*_LD, and include
+    $(MAKEDIR)/common (noting program/library are deprecated). Updated the
+    parameters (self-located MAKEDIR/COMMON, PREFIX=/usr/local, TARGET=uname)
+    and added a "Building" section (depend-first, dependency order, no make -j,
+    strict warnings, uninstall).
 
 *** [low] Top README is Latin-1, shows mojibake on UTF-8 systems (README)
 =file= reports =ISO-8859 text=; line 19 contains =Relev\xe9s d'Identit\xe9= (é =

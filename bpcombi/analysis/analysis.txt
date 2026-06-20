@@ -1,54 +1,54 @@
  
-On  veut des objets  permettant d'énumérer  des arrangements,  c'est à
-dire,  par envois successifs  d'un message,  donner chaque  élément de
-l'ensemble  représenté.   Les  objets  à construire  représentent  des
+On  veut des objets  permettant d'Ã©numÃ©rer  des arrangements,  c'est Ã 
+dire,  par envois successifs  d'un message,  donner chaque  Ã©lÃ©ment de
+l'ensemble  reprÃ©sentÃ©.   Les  objets  Ã  construire  reprÃ©sentent  des
 ensembles, fonctions  d'un autre ensemble fini E.   Ces ensembles sont
-fini  ; mais  il est  possible  qu'il ne  soit pas  réalisable de  les
-énumérer  entièrement  avant la  fin  de  l'univers.   Ceci doit  être
-contrôlé  par les  objets  clients (qui  peuvent  utiliser la  méthode
+fini  ; mais  il est  possible  qu'il ne  soit pas  rÃ©alisable de  les
+Ã©numÃ©rer  entiÃ¨rement  avant la  fin  de  l'univers.   Ceci doit  Ãªtre
+contrÃ´lÃ©  par les  objets  clients (qui  peuvent  utiliser la  mÃ©thode
 cardinal pour ce faire).
 
 
 
 ======================================================================
-===  Arrangements avec répétition de n élements parmis N = | E |  ===
+===  Arrangements avec rÃ©pÃ©tition de n Ã©lements parmis N = | E |  ===
 ======================================================================
  
- Ensemble à énumérer : F = E ^ n.
+ Ensemble Ã  Ã©numÃ©rer : F = E ^ n.
 
 Cardinal : | F | = | E ^ n |  =  | E | ^ n
 
-Chaque élément de l'énumération est n­uplet consistant en une suite de
-n éléments de E, éventuellement avec répétition.
+Chaque Ã©lÃ©ment de l'Ã©numÃ©ration est nÂ­uplet consistant en une suite de
+n Ã©lÃ©ments de E, Ã©ventuellement avec rÃ©pÃ©tition.
 	
 Algorithme : 
  		int		choice[n];
 	init:
-		for i in [0,n­1], choice[i]=0, 
+		for i in [0,nÂ­1], choice[i]=0, 
 	next:
-		k=n­1;
+		k=nÂ­1;
 		(choice[k])++;
 		while((k>0)&&(choice[k]>=N)){
 			choice[k]=0;
-			k­­;
+			kÂ­Â­;
 			(choice[k])++;
 		}
 	
 	done:
-		for i in [1,n­1] choice[i]=0 AND choice[0]=N
+		for i in [1,nÂ­1] choice[i]=0 AND choice[0]=N
  
 
 
 ======================================================================
-===   Arrangements sans répétition de n élements parmis N = | E |  ===
+===   Arrangements sans rÃ©pÃ©tition de n Ã©lements parmis N = | E |  ===
 ======================================================================
  
-Ensemble à énumérer : F = { (e1,...,en) in E, i!=j => ei!=ej }.
+Ensemble Ã  Ã©numÃ©rer : F = { (e1,...,en) in E, i!=j => ei!=ej }.
 
-Cardinal : | F |  =  A(n,N) = N! / (N­n)! 
+Cardinal : | F |  =  A(n,N) = N! / (NÂ­n)! 
 
-Chaque élément de l'énumération   est un n­uplet,  et consiste  en une
-suite de n éléments de E, sans répétition.
+Chaque Ã©lÃ©ment de l'Ã©numÃ©ration   est un nÂ­uplet,  et consiste  en une
+suite de n Ã©lÃ©ments de E, sans rÃ©pÃ©tition.
 	
 Algorithme :
         BOOLEAN taken[N];
@@ -72,14 +72,14 @@ Algorithme :
 		}
 		done;
 	BLOCK(n):
-		a[0]...a[n-1] est un n-uplet de l'énumération.
+		a[0]...a[n-1] est un n-uplet de l'Ã©numÃ©ration.
 
 	
 	--------------------------------------------------------
 	init:
 		for all i in 0..n-1, a[i]=i; taken[a[i]]=TRUE;	
 		for all i in n..N-1, taken[i]=FALSE;
-		a[0]...a[n-1] est le premier n-uplet de l'énumération.
+		a[0]...a[n-1] est le premier n-uplet de l'Ã©numÃ©ration.
 	next:
 
 
@@ -110,7 +110,7 @@ Algorithme :
 				done
 			}
 		}
-		a[0],...,a[n-1] est un n-uplet de l'énumération.
+		a[0],...,a[n-1] est un n-uplet de l'Ã©numÃ©ration.
 	--------------------------------------------------------
 
 									 
@@ -132,14 +132,14 @@ Mauvais Algorithme :
  		BOOLEAN	taken[N];
 		int		choice[n];
 	init:
-		for i in [0,n­1], taken[i]=TRUE, choice[i]=i, 
-		for i in [n,N­1], taken[i]=FALSE
+		for i in [0,nÂ­1], taken[i]=TRUE, choice[i]=i, 
+		for i in [n,NÂ­1], taken[i]=FALSE
 	next:
-		k=n­1;
+		k=nÂ­1;
 		choice[k]=nextchoice(choice[k]);
 		while (k>0) && (choice[k]>=N) {
 			choice[k]=firstchoice(choice[k]);
-			k­­;
+			kÂ­Â­;
 			choice[k]=nextchoice(choice[k]);
 		}
 	
@@ -177,31 +177,31 @@ Mauvais Algorithme :
 
  
 ======================================================================
-===         Combinaisons de n élements parmis N = | E |            ===
+===         Combinaisons de n Ã©lements parmis N = | E |            ===
 ======================================================================
 
  
-Ensemble à énumérer : F = ensemble des parties de E contenant n éléments.
+Ensemble Ã  Ã©numÃ©rer : F = ensemble des parties de E contenant n Ã©lÃ©ments.
 
-Cardinal : | F |  =  C(n,N) = A(n,N) / n! = N! / (n! (N­n)!)
+Cardinal : | F |  =  C(n,N) = A(n,N) / n! = N! / (n! (NÂ­n)!)
 
-Chaque élément de  l'énumération  est un  n­uplet,  et consiste en  un
-sous­ensemble de n éléments de E.
+Chaque Ã©lÃ©ment de  l'Ã©numÃ©ration  est un  nÂ­uplet,  et consiste en  un
+sousÂ­ensemble de n Ã©lÃ©ments de E.
 
 Algorithme : 
  		int	choice[n];
 	init:
-		for i in [0..n­1] choice[i]=i;
+		for i in [0..nÂ­1] choice[i]=i;
 	next:
-		f(choice,n­1);
+		f(choice,nÂ­1);
 	
 	f(choice,i)
 	{
 		(choice[i])++;
-		if(choice[i]>=N­(n­1)+i){
+		if(choice[i]>=NÂ­(nÂ­1)+i){
 			if(i>0){
-				f(choice,i­1);
-				choice[i]=choice[i­1]+1;
+				f(choice,iÂ­1);
+				choice[i]=choice[iÂ­1]+1;
 			}else{
 				// done
 			}
@@ -209,7 +209,7 @@ Algorithme :
 	}
 
 	done:
-		choice[0]=N­n­1
+		choice[0]=NÂ­nÂ­1
 		
  
 
@@ -218,7 +218,7 @@ Algorithme :
 int N = E.cardinal
 int n ; 
 int cardinal(void);	// cardinal de l'ensemble des arrangements (ou combinaisons)
-void reset(void);	// réinitialise l'énumération.
+void reset(void);	// rÃ©initialise l'Ã©numÃ©ration.
 BOOLEAN getCurrentElement(int* choice); // return the new current element and return done().
 BOOLEAN getNextElement(int* choice); // increment the enumeration, return the new current element and return done().
 BOOLEAN done(void);	// whether all elements have been enumerated.

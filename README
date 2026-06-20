@@ -16,7 +16,7 @@ bolib       Bourguignon's Objective-C Library. A few Objective-C classes.
 
 bplib       Bourguignon's C++ Library. A few C++ classes.
 
-bprib       Bourguignon's C++ RIB Library. RIB = Relevés d'Identité Bancaire,
+bprib       Bourguignon's C++ RIB Library. RIB = RelevÃ©s d'IdentitÃ© Bancaire,
             ie. French standardized bank account numbers. (There's now an
             englobing IBAN standard for European account numbers).
             Compute and check RIB keys.

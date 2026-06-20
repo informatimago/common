@@ -57,9 +57,9 @@ Installation directory hierarchy
     project-dir
     -----------
         Makefile
-            SUBPROJECT=module1 module2
-            include $(COMMON)/makedir/project
-            
+            MODULES = module1 module2
+            include $(MAKEDIR)/project
+
         module1/
         module2/
         ...
@@ -79,12 +79,29 @@ Installation directory hierarchy
         sources/
             Makefile
 
-                PROGRAMNAME=name
-                include $(COMMON)/makedir/program
+                # Real convention (the makedir/program and makedir/library
+                # includes are DEPRECATED --- everything includes common):
+                INTERFACES   = Foo.h
+                CSOURCES     = foo.c
+                CPLUSSOURCES = bar.cc
+                OBJCSOURCES  = baz.m
+                INCLUDES     = -I. -I../interfaces ... $(TARGET_INCLUDES)
 
-                LIBRARYNAME=name
-                include $(COMMON)/makedir/library
-        
+                # For a library named "mylib":
+                LIBRARIES        = mylib
+                mylib_OBJECTS    = $(CSOURCES:.c=.o) $(OBJCSOURCES:.m=.o) \
+                                   $(CPLUSSOURCES:.cc=.o)
+
+                # For a program named "myprog":
+                PROGRAMS         = myprog
+                myprog_OBJECTS   = myprog.o
+                myprog_LIBRARIES = $(PREFIX)/lib/mylib/libraries/libmylib.a \
+                                   $(TARGET_LIBRARIES)
+                myprog_LD        = $(CCPLUS)   # if it is C++/Objective-C
+
+                include $(MAKEDIR)/common
+                -include Makefile.depend
+
         
         specifications/
         tests/ 
@@ -129,21 +146,47 @@ Makefile targets
 Makefile parameters
 -------------------
 
-    MAKEDIR     Where the makefiles are found.
-                $(COMMON)/make
+    MAKEDIR     Where the makefiles (project, module, common, target*) are.
+                The top Makefile derives it from its own location, so it works
+                regardless of $HOME (and under "sudo make install").
 
-    BCLIB       Where the BCLIB module is installed.
-                $(PREFIX)/bclib
+    COMMON      The root of the source tree (also self-located by the top
+                Makefile).  Used by the lisp rules and documentation.
 
-    BPLIB       Where the BPLIB module is installed.
-                $(PREFIX)/bplib
+    PREFIX      Where things are installed.  Default: /usr/local.
+                Each module installs under $(PREFIX)/lib/$(MODULE)/.
+
+    TARGET      Platform name; default $(shell uname) (e.g. Linux, Darwin).
+                There must be a makedir/target$(TARGET) file, or the build
+                silently lacks a compiler.  Override: make TARGET=Darwin ...
+
+    The installed layout per module is:
+
+        $(PREFIX)/lib/$(MODULE)/interfaces/
+        $(PREFIX)/lib/$(MODULE)/libraries/      (lib$(MODULE).a)
+        $(PREFIX)/lib/$(MODULE)/documentation/
+        $(PREFIX)/bin/                          (programs)
 
 
-    The module directories generaly contain:
+Building
+--------
 
-        $(MODULE)/interfaces/
-        $(MODULE)/documentation/
-        $(MODULE)/libraries/
+    make depend ; make ; make install
+
+    Notes:
+    - Run "make depend" before "make": Makefile.depend is -include'd and absent
+      on a clean tree, so the first build needs it generated. (Historically a
+      second "make depend" was needed; the in-tree cross-module -I paths now
+      make one pass enough.)
+    - Modules build/install in dependency order (bclib first; bplib, bpcombi,
+      bprib need it installed; tests link against the *installed* libraries).
+      "make -j" across modules is NOT yet safe --- build serially.
+    - PREFIX defaults to /usr/local, so a system-wide install is
+      "sudo make install"; use PREFIX=$HOME/somewhere for a private one.
+    - The warning set is strict: -Werror -pedantic-errors plus -Wconversion,
+      -Wshadow, etc. (see makedir/warnings).  A new compiler may add warnings
+      that become errors; relax WARNINGS there if needed.
+    - "make uninstall" removes a module's installed files from $(PREFIX).
 
 
 

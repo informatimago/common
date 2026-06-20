@@ -60,8 +60,8 @@ main()
         static BcDefault_T vector[] = {
             {"NXFont",              "Helvetica"},
             {"NXFontSize",          "12.0"},
-            {"Nom avec: \\<-ici",   "Donn›e avec tabulation: <  >"},
-            {"Donn›e avec return",  "Le retour est l’: <\n> nouvelle ligne"},
+            {"Nom avec: \\<-ici",   "Donn√ùe avec tabulation: <  >"},
+            {"Donn√ùe avec return",  "Le retour est l√ï: <\n> nouvelle ligne"},
             {NIL,               NIL}
         };
         INT32           i;
@@ -84,8 +84,8 @@ main()
     value=BcDefault_Get(OWNER,"NXFontSize");
     fprintf(stdout,"Get(%s,%s)=\n    [%s]\n",OWNER,"NXFontSize",value);
     
-    BcDefault_Set(OWNER,"Nouveaux default","Le grand-p‹re de ma "
-                    "grand-m‹re et le p‹re de la m‹re de mon grand-frﬁre.");
+    BcDefault_Set(OWNER,"Nouveaux default","Le grand-p√úre de ma "
+                    "grand-m√úre et le p√úre de la m√úre de mon grand-fr√ûre.");
     value=BcDefault_Get(OWNER,"Nouveaux default");
     fprintf(stdout,"Get(%s,%s)=\n    [%s]\n",OWNER,"Nouveaux default",value);
     
