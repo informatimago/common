@@ -27,6 +27,10 @@ LEGAL
 #include BpObject_hh
 
 
+#define BpRIB_eBadFieldLength   (13000) // const char* compte, INT32 totalLength
+#define BpRIB_eBignumError      (13001) // const char* message, NIL
+
+
 #define BpRIB_SUPER BpObject
 class BpRIB:BpRIB_SUPER
 /*

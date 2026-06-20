@@ -1296,6 +1296,7 @@ p_v (name, num, len)
     for (i=0; i<len; i++) printf ("%c",BCD_CHAR(num[i]));
     printf ("\n");
 }
+#endif /* DEBUG -- was wrongly left open, compiling out str2num/num2str below. */
 
 
 /* Convert strings to bc numbers.  Base 10 only.*/
@@ -1409,6 +1410,5 @@ char
     *sptr = '\0';
     return (str);
 }
-#endif
 
 /*** number.c                         -- 2004-01-01 10:00:19 -- pascal   ***/

@@ -26,6 +26,9 @@ extern "C"{
 }
 #include <names.h>
 #include BpRIB_hh
+extern "C"{
+#include BcExcept_h
+}
 #include BcImplementation_h
 
 
@@ -187,17 +190,24 @@ PROCEDURE(computeCle,(const char* nBanque,const char* nGuichet,
         number_inited=TRUE;
     }
 
-    sprintf(rib,"%5s%5s%11s00",nBanque,nGuichet,nCompte);
+    /* The fields must already be exactly 5/5/11 chars (the algorithm relies on
+       fixed widths).  Validate, then bound the write with snprintf --- "%5s"
+       etc. are minimum widths, so an over-long argument would overflow rib. */
+    if((strlen(nBanque)!=5)||(strlen(nGuichet)!=5)||(strlen(nCompte)!=11)){
+        BcRAISE(BpRIB_eBadFieldLength,(const void*)nCompte,
+                (void*)(size_t)(strlen(nBanque)+strlen(nGuichet)+strlen(nCompte)));
+    }
+    snprintf(rib,sizeof(rib),"%5s%5s%11s00",nBanque,nGuichet,nCompte);
     for(i=0;rib[i]!='\0';i++){
         rib[i]=ribValue(rib[i]);
     }
-        
+
     ribnum=new_num(23,0);
     str2num(&ribnum,rib,0);
     remainder=new_num(2,0);
     bc_modulo(ribnum,quatrevingtdixsept,&remainder,0);
     r=num2long(remainder);
-    sprintf(rescle,"%02ld",(r==0)?r:97-r);
+    snprintf(rescle,sizeof(rescle),"%02ld",(r==0)?r:97-r);
     return(rescle);
 }//computeCle;
 
@@ -340,14 +350,19 @@ extern "C"{
 
     void rt_error(char* message,...)
     {
+        /* DECISION: surface bignum failures via BcExcept instead of silently
+           swallowing them. */
+        BcRAISE(BpRIB_eBignumError,(const void*)message,NIL);
     }//rt_error;
-    
+
     void rt_warn(char* message,...)
     {
+        fprintf(stderr,"BpRIB bignum warning: %s\n",message);
     }//rt_warn;
-    
+
     void out_of_memory(void)
     {
+        BcRAISE(BpRIB_eBignumError,(const void*)"out of memory",NIL);
     }//out_of_memory;
     
 }   

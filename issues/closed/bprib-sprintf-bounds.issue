@@ -2,7 +2,22 @@
 #+TITLE: bprib: unchecked sprintf in computeCle
 #+DATE: 2026-06-20
 
-* TODO [#C] bprib: bound the sprintf in computeCle  :bprib:memory:
+* DONE [#C] bprib: bound the sprintf in computeCle  :bprib:memory:
+  RESOLUTION (2026-06-20):
+  - computeCle: validate the 5/5/11 field lengths (raise a new
+    BpRIB_eBadFieldLength) and write with snprintf instead of sprintf (the "%5s"
+    widths are minimums, so an over-long arg could overrun rib[24]). rescle uses
+    snprintf too.
+  - Per DECISION, the bignum hooks now surface failures via BcExcept: rt_error
+    and out_of_memory BcRAISE a new BpRIB_eBignumError; rt_warn prints to stderr
+    (were all silent no-ops).
+  - While validating, found and fixed a latent unlinkability bug: number.c had an
+    unterminated "#ifdef DEBUG" (the #endif sat at EOF), so str2num and num2str
+    were compiled out and nothing could link bprib. Closed the DEBUG block after
+    the debug printers.
+  Validated: keys for 20041 01005 0500013M026 -> 06 (La Banque Postale example)
+  and 30002 00550 0000157841C -> 43, both matching an independent mod-97
+  computation.
 
 *** [medium] sprintf into fixed rib[24] is unchecked (BpRIB.cc:190)
 #+begin_src c
