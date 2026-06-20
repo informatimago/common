@@ -58,6 +58,7 @@ LEGAL
 ******************************************************************************/
 /* standard*/
 #include <stdlib.h>
+#include <string.h>
 #if defined(NEXTSTEP) || defined(MACOSX)
 #else
 /* Where really? */
@@ -95,171 +96,32 @@ LEGAL
     }/*BcMem_Deallocate;*/
 
     
+    /*
+        These three routines were originally hand-rolled word-at-a-time loops.
+        That code computed its alignment masks with &sizeof(T) instead of
+        &(sizeof(T)-1) and, in BcMem_Copy, only checked congruence mod 2 before
+        a CARD32 word copy and tested the never-advanced original pointer --- so
+        it could dereference a misaligned CARD32* (undefined behaviour, and a
+        fault on strict-alignment targets).  They are now delegated to the
+        standard library, which is correct, alignment-safe, and faster.
+        BcMem_Copy keeps its overlap-safe (memmove) contract.
+    */
+
     PROCEDURE(BcMem_Clear,(void* p,CARD32 size),void)
     {
-            CARD8*          p1;
-            CARD16*         p2;
-            CARD32*         p4;
-        
-        p1=p;
-        if((size>=sizeof(CARD8)) AND ((((CARDPTR)p1)&((CARDPTR)(sizeof(CARD8))))!=0)){
-            (*p1)=(CARD8)0;
-            INC(p1);
-            size-=(CARD32)sizeof(CARD8);
-        }
-        p2=(CARD16*)p1;
-        if((size>=sizeof(CARD16))AND((((CARDPTR)p2)&(CARDPTR)(sizeof(CARD16)))!=0)){
-            (*p2)=(CARD16)0;
-            INC(p2);
-            size-=(CARD32)sizeof(CARD16);
-        }
-        p4=(CARD32*)p2;
-        while(size>=sizeof(CARD32)){
-            (*p4)=0;
-            INC(p4);
-            size-=(CARD32)sizeof(CARD32);
-        }
-        p2=(CARD16*)p4;
-        if(size>=sizeof(CARD16)){
-            (*p2)=(CARD16)0;
-            INC(p2);
-            size-=(CARD32)sizeof(CARD16);
-        }
-        p1=(CARD8*)p2;
-        if(size>=sizeof(CARD8)){
-            (*p1)=(CARD8)0;
-            INC(p1);
-            size-=(CARD32)sizeof(CARD8);
-        }
+        memset(p,0,(size_t)size);
     }/*BcMem_Clear;*/
 
 
     PROCEDURE(BcMem_Fill,(void* p,CARD32 size,CARD8 value),void)
     {
-            union {
-                CARD8           array[4];
-                CARD8           byte;
-                CARD16          word;
-                CARD32          longword;
-            }               fill;
-            CARD8*          p1;
-            CARD16*         p2;
-            CARD32*         p4;
-        
-        fill.array[0]=fill.array[1]=fill.array[2]=fill.array[3]=value;
-        p1=p;
-        if((size>=sizeof(CARD8))AND((((CARDPTR)p1)&(CARDPTR)(sizeof(CARD8)))!=0)){
-            (*p1)=fill.byte;
-            INC(p1);
-            size-=(CARD32)sizeof(CARD8);
-        }
-        p2=(CARD16*)p1;
-        if((size>=sizeof(CARD16))AND((((CARDPTR)p2)&(CARDPTR)(sizeof(CARD16)))!=0)){
-            (*p2)=fill.word;
-            INC(p2);
-            size-=(CARD32)sizeof(CARD16);
-        }
-        p4=(CARD32*)p2;
-        while(size>=sizeof(CARD32)){
-            (*p4)=fill.longword;
-            INC(p4);
-            size-=(CARD32)sizeof(CARD32);
-        }
-        p2=(CARD16*)p4;
-        if(size>=sizeof(CARD16)){
-            (*p2)=fill.word;
-            INC(p2);
-            size-=(CARD32)sizeof(CARD16);
-        }
-        p1=(CARD8*)p2;
-        if(size>=sizeof(CARD8)){
-            (*p1)=fill.byte;
-            INC(p1);
-            size-=(CARD32)sizeof(CARD8);
-        }
+        memset(p,(int)value,(size_t)size);
     }/*BcMem_Fill;*/
-    
-    
+
+
     PROCEDURE(BcMem_Copy,(const void* from,void* to,CARD32 size),void)
     {
-            const CARD8*    f1;
-            CARD8*          t1;
-            const CARD32*   f4;
-            CARD32*         t4;
-        
-        if((((CARDPTR)from)&1)!=(((CARDPTR)to)&1)){
-            if((CARDPTR)from<(CARDPTR)to){
-                f1=((const CARD8*)from)+size;
-                t1=((CARD8*)to)+size;
-                while(size>0){
-                    DEC(f1);
-                    DEC(t1);
-                    (*t1)=(*f1);
-                    DEC(size);
-                }
-            }else{
-                f1=from;
-                t1=to;
-                while(size>0){
-                    (*t1)=(*f1);
-                    INC(f1);
-                    INC(t1);
-                    DEC(size);
-                }
-            }
-        }else{
-            if((CARDPTR)from<(CARDPTR)to){
-                f1=((const CARD8*)from)+size;
-                t1=((CARD8*)to)+size;
-                while((size>0)&&((((CARDPTR)from)&3)!=0)){
-                    DEC(f1);
-                    DEC(t1);
-                    (*t1)=(*f1);
-                    DEC(size);
-                }
-                f4=(const CARD32*)f1;
-                t4=(CARD32*)t1;
-                while(size>=sizeof(CARD32)){
-                    DEC(f4);
-                    DEC(t4);
-                    (*t4)=(*f4);
-                    DECR(size,(CARD32)sizeof(CARD32));
-                }
-                f1=(const CARD8*)f4;
-                t1=(CARD8*)t4;
-                while(size>0){
-                    DEC(f1);
-                    DEC(t1);
-                    (*t1)=(*f1);
-                    DEC(size);
-                }
-            }else{
-                f1=from;
-                t1=to;
-                while((size>0)&&((((CARDPTR)from)&3)!=0)){
-                    (*t1)=(*f1);
-                    INC(f1);
-                    INC(t1);
-                    DEC(size);
-                }
-                f4=(const CARD32*)f1;
-                t4=(CARD32*)t1;
-                while(size>=sizeof(CARD32)){
-                    (*t4)=(*f4);
-                    INC(f4);
-                    INC(t4);
-                    DECR(size,(CARD32)sizeof(CARD32));
-                }
-                f1=(const CARD8*)f4;
-                t1=(CARD8*)t4;
-                while(size>0){
-                    (*t1)=(*f1);
-                    INC(f1);
-                    INC(t1);
-                    DEC(size);
-                }
-            }
-        }
+        memmove(to,from,(size_t)size);
     }/*BcMem_Copy;*/
     
     

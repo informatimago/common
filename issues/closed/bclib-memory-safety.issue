@@ -2,7 +2,23 @@
 #+TITLE: bclib: memory-safety bugs
 #+DATE: 2026-06-20
 
-* TODO [#A] bclib: memory-safety bugs  :critical:bclib:memory:
+* DONE [#A] bclib: memory-safety bugs  :critical:bclib:memory:
+  RESOLUTION (2026-06-20):
+  - BcMem_Clear/Fill/Copy: replaced the hand-rolled word-at-a-time loops (whose
+    alignment masks and mod-2-only copy congruence caused misaligned CARD32
+    access) with memset/memset/memmove. Correct, alignment-safe, overlap-safe.
+  - BcCStr_RepeatChar: clamp count to [0,1023] BEFORE the cache fast-path.
+  - BcCStr_Terminate: drop the stray buffer[length+1]=0 (overran buffer[1024]
+    at length==1023); pass length+1 to BcCStr_Assign so it copies up to `length`
+    chars as documented and terminates correctly.
+  - BcList_RemoveObjectAt: loop while idx+1<count (was idx<count, reading
+    elements[count]); SetCapacity now rejects a newCapacity whose byte size
+    would overflow the CARD32 alloc argument.
+  - BcString: DeleteFromLength rejects delen<=0; PositionFrom bounds the inner
+    match by sub->dlength (the tail-match 0==0 over-read); CopyFromLength clamps
+    idx to [0,str->dlength].
+  Validated with functional tests (position exact/mid/none/longer-needle/from-idx,
+  list remove first+last at capacity, overlapping BcMem_Copy, fill/clear).
 
 Severity: *high/critical* — out-of-bounds accesses and undefined behaviour.
 

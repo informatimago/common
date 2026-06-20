@@ -292,6 +292,9 @@ PROCEDURE(BcString_DeleteFromLength,
     }else if(this->dlength<=idx){
         return(this);
     }
+    if(delen<=0){ /* nothing to delete; a negative delen overran the buffer. */
+        return(this);
+    }
     if(this->dlength<idx+delen){
         delen=this->dlength-idx;
     }
@@ -320,10 +323,12 @@ PROCEDURE(BcString_PositionFrom,
     }
     while(pos<=max){
         i=0;
-        while(this->data[pos+i]==sub->data[i]){
+        /* Bound by sub->dlength: without it, a tail match where both
+           terminators align (0==0) keeps incrementing i past both buffers. */
+        while((i<sub->dlength)&&(this->data[pos+i]==sub->data[i])){
             INC(i);
         }
-        if(sub->data[i]==(char)0){
+        if(i==sub->dlength){
             return(pos);
         }
         INC(pos);
@@ -340,6 +345,11 @@ PROCEDURE(BcString_CopyFromLength,
     BcString_P      this=(BcString_P)t;
     BcString_P      str=(BcString_P)string;
 
+    if(idx<0){ /* a negative idx would make BcMem_Copy read before str->data. */
+        idx=0;
+    }else if(idx>str->dlength){
+        idx=str->dlength;
+    }
     if(idx+copylen>str->dlength){
         copylen=str->dlength-idx;
     }

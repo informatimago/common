@@ -135,6 +135,11 @@ LEGAL
         if(newCapacity<BcList_Minimum){
             newCapacity=BcList_Minimum;
         }
+        if(newCapacity>MAX_CARD32/(CARD32)sizeof(void*)){
+            /* sizeof(void*)*newCapacity would overflow the CARD32 size passed
+               to BcMem_Allocate, yielding an undersized buffer.  Refuse it. */
+            BcRAISE(BcList_eCapacityTooLow,(void*)list,(void*)(CARDPTR)newCapacity);
+        }
         if(plist->count>newCapacity){
             BcRAISE(BcList_eCapacityTooLow,(void*)list,(void*)(CARDPTR)newCapacity);
         }else{
@@ -258,7 +263,7 @@ Console_fprintf(console,"BcList_InsertObjectAt returns TRUE\n");
             BcRAISE(BcList_eBadIndex,(void*)list,(void*)(CARDPTR)idx);
         }
         oldObject=plist->elements[idx];
-        while(idx<plist->count){
+        while(idx+1<plist->count){ /* was idx<count: read elements[count] (OOB). */
             plist->elements[idx]=plist->elements[idx+1];
             idx++;
         }

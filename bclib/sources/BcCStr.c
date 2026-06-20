@@ -93,14 +93,16 @@ LEGAL
             static INT32        oldcount=0;
             static CHAR         oldc=(CHAR)0;
         
-        if((count<=oldcount)&&(c==oldc)){
-            buffer[count]=(CHAR)0;
-            return(buffer);
-        }
         if(count<0){
             count=0;
         }else if(count>1023){
             count=1023;
+        }
+        /* Clamp BEFORE the cache fast-path: a negative or oversized count must
+           never reach buffer[count]. */
+        if((count<=oldcount)&&(c==oldc)){
+            buffer[count]=(CHAR)0;
+            return(buffer);
         }
         oldcount=count;
         oldc=c;
@@ -123,8 +125,11 @@ LEGAL
         }else if(length>1023){
             length=1023;
         }
-        BcCStr_Assign(string,buffer,length);
-        buffer[length+1]=(CHAR)0;
+        /* sizeofto = length+1 so up to `length` chars are copied (as documented)
+           and BcCStr_Assign terminates correctly.  The old code passed `length`
+           (one char short) and then wrote buffer[length+1] --- a stray, useless
+           store that overran buffer[1024] when length==1023. */
+        BcCStr_Assign(string,buffer,length+1);
         return(buffer);
     }/*BcCStr_Terminate; */
     
