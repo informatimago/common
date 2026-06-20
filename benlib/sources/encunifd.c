@@ -69,7 +69,7 @@ LEGAL
             "greater",
             "ampersand",
             "dollar",
-            "star",
+            "asterisk",
             "parenleft",
             "percent",
             "colon",

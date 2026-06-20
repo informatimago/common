@@ -32,8 +32,8 @@ LEGAL
     typedef char*               BenStringP;
     
     typedef struct {
-        BenStringP              .charName;
-        BenStringP              .asciiApproximation;
+        BenStringP              charName;
+        BenStringP              asciiApproximation;
     }                       BenApproximationT;
     typedef BenApproximationT   BenApproximationTableT[];
     

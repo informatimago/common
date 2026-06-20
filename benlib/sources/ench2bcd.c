@@ -72,7 +72,7 @@ LEGAL
             "R",
             "numbersign",           /* # */
             "dollar",               /* $ */
-            "star",                 /* * */
+            "asterisk",             /* * */
             "quotedbl",             /* " */
             "bracketright",         /* ] */
             "exclam",               /* ! */

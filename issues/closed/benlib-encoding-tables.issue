@@ -2,7 +2,23 @@
 #+TITLE: benlib: encoding-table data errors
 #+DATE: 2026-06-20
 
-* TODO [#B] benlib: fix encoding-table data errors  :benlib:data:
+* DONE [#B] benlib: fix encoding-table data errors  :benlib:data:
+  RESOLUTION (2026-06-20):
+  - approxim.c: added the missing comma (=minus= now =-=); removed the duplicate
+    =dblrightdbldownbar= line. Verified the table is still strictly sorted
+    (binary-search requirement) — 457 entries, =sort -c= clean.
+  - Canonicalised names: ISO-Latin-1 0x2D =minus= → =hyphen= (so ASCII↔Latin-1
+    "-" round-trips; the 0xAD soft-hyphen duplicate is benign — name→code returns
+    the first match, 0x2D); =star= → =asterisk= in encunifd, ench2bcd, ench6bcd,
+    encebcdi, encibbcd.
+  - Typos: =onequater=→=onequarter= (encebcdi), =coma=→=comma= (encibbcd),
+    =hypen=→=hyphen= (ench6bcd).
+  - EBCDIC 0x79 =cent= → =grave= (CP037; 0x4A remains the real ¢).
+  - enctypes.h: removed the stray dots in the (dead, unincluded) struct so it is
+    valid C.
+  Validated: ascii "-*" → isolatin1 yields bytes 0x2D 0x2A (was 0x2D→0x2A but
+  "-" previously resolved to 0xAD). Left as-is (low confidence / author's CP
+  variant): MSDOS 0x7F=Delta, 0x7C=bar.
 
 Severity: *high* (silent wrong conversions) — these are data bugs, not crashes:
 affected characters simply fail to convert or have no ASCII approximation.

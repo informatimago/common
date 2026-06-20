@@ -72,7 +72,7 @@ LEGAL
             "R",
             "hyphen",
             "dollar",
-            "star",
+            "asterisk",
             "parenright",
             "semicolon",
             "quotesingle",
@@ -86,7 +86,7 @@ LEGAL
             "X",
             "Y",
             "Z",
-            "hypen",    /*** same as 52(8) ? ***/
+            "hyphen",   /*** same as 52(8) ? ***/
             "comma",
             "percent",
             "equal",

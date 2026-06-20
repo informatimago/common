@@ -73,7 +73,7 @@ LEGAL
             "asterisk",
             "plus",
             "comma",
-            "minus",
+            "hyphen",       /* 0x2D HYPHEN-MINUS: same name as ASCII so "-" round-trips. */
             "period",
             "slash",
             "zero",
