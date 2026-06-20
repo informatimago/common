@@ -44,7 +44,7 @@ LEGAL
     
     DESTRUCTOR(BpArrangementSansRepeat)
     {
-        DELETE(_taken);
+        DELETE_ARRAY(_taken);
     }//~BpArrangementSansRepeat;
 
 
@@ -64,12 +64,7 @@ LEGAL
 
     
 // BpSetEnumerator methods:
-
-    METHOD(BpArrangementSansRepeat,done,(void),BOOLEAN)
-    {
-        return(_choice[0]==_baseCardinal);
-    }//done;
-    
+// done() is now provided by BpSetFunctor (index-based).
 
 // BpSetFunctor methods:
 
@@ -95,7 +90,7 @@ LEGAL
     {
             CARD32      i;
         
-        DELETE(_taken);
+        DELETE_ARRAY(_taken);
         _taken=new BOOLEAN[_baseCardinal];
         for(i=0;i<_baseCardinal;i++){
             _taken[i]=FALSE;

@@ -49,7 +49,7 @@ LEGAL
     
     DESTRUCTOR(BpSetFunctor)
     {
-        DELETE(_choice);    // valid even when choice==NIL.
+        DELETE_ARRAY(_choice);    // valid even when choice==NIL; _choice is new[].
     }//~BpSetFunctor;
 
 
@@ -105,9 +105,12 @@ LEGAL
     METHOD(BpSetFunctor,reset,(void),void)
     {
         computeCardinal();
-        delete(_choice);
-        _choice=new CARD32[_cardinal];
+        DELETE_ARRAY(_choice);
+        /* _choice holds _elementSize indices, NOT _cardinal (the total number
+           of combinations/arrangements, which can be astronomically large). */
+        _choice=new CARD32[_elementSize];
         initialize();
+        _index=0;
         _atBegining=TRUE;
     }//reset;
     
@@ -131,16 +134,29 @@ LEGAL
     }//getCurrentElement;
     
 
+    METHOD(BpSetFunctor,done,(void),BOOLEAN)
+    {
+        /* Contract: !atBegining() && index()==cardinal().  Index-based, so it
+           does not depend on a per-subclass _choice[0] terminal heuristic
+           (those disagreed: combination's next() lands ON the last element,
+           the arrangements' next() overshoots to a sentinel). */
+        return((BOOLEAN)((!_atBegining)&&(_index>=_cardinal)));
+    }//done;
+
+
     METHOD(BpSetFunctor,getNextElement,(CARD32* choice),BOOLEAN)
     {
-        if((_cardinal>0)&&(!done())){
+        if((_cardinal>0)&&(_index<_cardinal)){
             if(_atBegining){
                 _atBegining=FALSE;
             }else{
                 next();
             }
             getCurrentElement(choice);
-            return(done());
+            _index++;
+            /* next() is called exactly _cardinal-1 times, so it never advances
+               past the last valid element (no sentinel is ever emitted). */
+            return((BOOLEAN)(_index>=_cardinal));
         }else{
             return(FALSE);
         }

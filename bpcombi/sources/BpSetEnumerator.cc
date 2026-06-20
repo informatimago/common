@@ -33,7 +33,14 @@ LEGAL
 
     static const char rcsid[]="$Id";
 
-// All BpSetEnumerator methods are abstract.
+// All BpSetEnumerator methods are abstract, but the virtual destructor must be
+// defined out-of-line: it is the class's key function, so without it neither
+// the destructor nor the vtable/typeinfo are emitted and nothing can link
+// against BpSetEnumerator (or its subclasses).
+
+    DESTRUCTOR(BpSetEnumerator)
+    {
+    }//~BpSetEnumerator;
 
 //END BpSetEnumerator.
 

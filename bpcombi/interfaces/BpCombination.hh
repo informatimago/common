@@ -48,7 +48,6 @@ public:
 
 // BpSetEnumerator methods:
 
-    METHOD(BpCombination,done,(void),BOOLEAN)
     
 protected:
 

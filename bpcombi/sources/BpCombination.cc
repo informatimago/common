@@ -62,18 +62,9 @@ LEGAL
 
     
 // BpSetEnumerator methods:
+// done() is now provided by BpSetFunctor (index-based), replacing the old
+// per-class _choice[0] heuristic (which here even used "=" instead of "==").
 
-    METHOD(BpCombination,done,(void),BOOLEAN)
-    {
-        if(_choice==NIL){
-            return(TRUE);
-        }else{
-            return(_choice[0]=_baseCardinal-_elementSize-1);
-        }
-    }//done;
-    
-
-    
 // BpSetFunctor methods:
 
     static CARD32 combination(CARD32 n,CARD32 N)
@@ -91,7 +82,7 @@ LEGAL
         // a>=b
         // N!/(a!b!) = Pi(i=a+1,N,i)/b!
         r=1;
-        for(i=a;i<=N;i++){
+        for(i=a+1;i<=N;i++){ // was i=a: multiplied an extra factor a.
             r*=i;
         }
         for(i=2;i<=b;i++){

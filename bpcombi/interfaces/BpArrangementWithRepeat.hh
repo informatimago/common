@@ -48,7 +48,6 @@ public:
 
 // BpSetEnumerator methods:
 
-    METHOD(BpArrangementWithRepeat,done,(void),BOOLEAN)
     
 protected:
 

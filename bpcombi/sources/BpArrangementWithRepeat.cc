@@ -62,21 +62,7 @@ LEGAL
 
     
 // BpSetEnumerator methods:
-
-    METHOD(BpArrangementWithRepeat,done,(void),BOOLEAN)
-    {
-            CARD32      i;
-        i=_elementSize-1;
-        while(i>0){
-            if(_choice[i]!=0){
-                return(FALSE);
-            }
-            i--;
-        }
-        return(_choice[0]==_baseCardinal);
-    }//done;
-    
-
+// done() is now provided by BpSetFunctor (index-based).
 
 // BpSetFunctor methods:
 

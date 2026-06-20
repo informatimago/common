@@ -2,7 +2,26 @@
 #+TITLE: bpcombi: enumeration and allocation bugs
 #+DATE: 2026-06-20
 
-* TODO [#A] bpcombi: combinatorial enumeration bugs  :bpcombi:cpp:
+* DONE [#A] bpcombi: combinatorial enumeration bugs  :bpcombi:cpp:
+  RESOLUTION (2026-06-20):
+  - BpCombination::done() used "=" (assignment) with a wrong terminal.  Replaced
+    the whole per-subclass _choice[0] heuristic: getNextElement() and done() are
+    now index-based in the base BpSetFunctor (done() = !atBegining && index ==
+    cardinal; getNextElement counts emitted elements and calls next() exactly
+    cardinal-1 times, so it never overshoots).  Removed the three leaf done()
+    overrides (BpCombination, BpArrangementSansRepeat, BpArrangementWithRepeat),
+    which disagreed on whether next() lands on the last element or a sentinel.
+  - combination(): product now runs i=a+1..N (was i=a, an extra factor a) so the
+    binomial is correct (C(4,2)=6, not 12).
+  - new[]/delete mismatch: added a DELETE_ARRAY macro (delete[]) in
+    BcImplementation.h and used it for _choice (BpSetFunctor) and _taken
+    (BpArrangementSansRepeat); _choice is now sized _elementSize (was _cardinal,
+    the astronomically large total count).
+  - BpSetEnumerator: defined the out-of-line virtual destructor (the empty .cc
+    never emitted it, so nothing could link against bpcombi at all).
+  Validated by enumerating C(n,k) and P(n,k) for several n,k: cardinal(), the
+  emitted count, and element validity (range + strict/no-dup) all correct,
+  including the single-element case.
 
 ** Findings
 

@@ -124,6 +124,8 @@ LEGAL
 #define NEW2(o,prm) (new o prm)
 #define NEW(o)      (new o)
 #define DELETE(o)   ((o==0)?0:(delete o,o=0))
+/* For memory allocated with new[] --- must be freed with delete[] (not delete). */
+#define DELETE_ARRAY(o) ((o==0)?0:(delete[] o,o=0))
 
 #endif
 /*** BcImplementation.h               -- 2001-04-11 02:44:49 -- pascal   ***/

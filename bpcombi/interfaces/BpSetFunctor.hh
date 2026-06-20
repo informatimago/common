@@ -59,6 +59,7 @@ public:
     METHOD(BpSetEnumerator,atBegining,(void),BOOLEAN)
     METHOD(BpSetEnumerator,getCurrentElement,(CARD32* choice),void)
     METHOD(BpSetEnumerator,getNextElement,(CARD32* choice),BOOLEAN)
+    METHOD(BpSetEnumerator,done,(void),BOOLEAN)
 
 // BpSetFunctor methods:
 
@@ -104,7 +105,7 @@ protected:
         /*
             NOTE:       It must be overriden by subclasses to step to the next 
                         element of the enumeration. If _index<_cardinal, then 
-                        it must increment _index ; if _index¹_cardinal then the 
+                        it must increment _index ; if _indexï¿½_cardinal then the 
                         choice array must be set to the first enumerated 
                         element.
         */
