@@ -5,3 +5,10 @@ Makefile.depend
 
 BpClassTest
 BpDictTest
+
+# Generated documentation (doc/ is built from the *.org sources)
+/doc/*.html
+/doc/*.texi
+/doc/*.info
+/doc/*.pdf
+/doc/*.7

@@ -63,6 +63,14 @@ MODULES= \
 
 include $(MAKEDIR)/project
 
+# Documentation (optional, separate from the library build; needs emacs,
+# texinfo, a TeX install and pandoc --- see doc/Makefile).
+.PHONY :: doc install-doc
+doc:
+	$(MAKE) -C doc
+install-doc:
+	$(MAKE) -C doc PREFIX=$(PREFIX) install
+
 help::
 	@echo ""
 	@echo "Input variables are:"

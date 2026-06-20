@@ -1,0 +1,190 @@
+#+TITLE: Informatimago's common C / C++ / Objective-C libraries
+#+AUTHOR: Pascal J. Bourguignon
+#+LANGUAGE: en
+#+OPTIONS: toc:2 num:t
+#+TEXINFO_DIR_CATEGORY: Software libraries
+#+TEXINFO_DIR_TITLE: common: (common).
+#+TEXINFO_DIR_DESC: Bourguignon's old C, C++ and Objective-C libraries.
+
+* Overview
+
+This is a collection of small, related libraries:
+
+| Module    | Language    | Purpose                                                        |
+|-----------+-------------+----------------------------------------------------------------|
+| =bclib=   | C           | Core: memory, exceptions, lists, C-strings, random.            |
+| =bjlib=   | C           | A simplified C library (=bj= prefix).                          |
+| =benlib=  | C           | Charset/encoding conversion (like iconv, plus exotic tapes).   |
+| =bolib=   | Objective-C | A few Objective-C classes (=Bo= prefix).                      |
+| =bplib=   | C++         | Core C++ classes (=Bp= prefix), reference-counted.            |
+| =bpcombi= | C++         | Combinatorics: lazy combinations / arrangements.               |
+| =bprib=   | C++         | French RIB (bank account) key computation and checking.        |
+
+* Building and installing
+
+: make depend ; make ; make install
+
+- =PREFIX= defaults to =/usr/local=; a private install is
+  =make PREFIX=$HOME/install install=.
+- Run =make depend= before =make= on a clean checkout (=Makefile.depend= is
+  =-include='d and absent at first).
+- Build the modules in dependency order (=bclib= first); =make -j= across
+  modules is not yet safe.
+- See =makedir/README= for the full build-system documentation.
+
+* Thread safety
+
+Unless stated otherwise, the libraries are *single-threaded per object*: you
+may use distinct objects from distinct threads, but a single object is not
+guaranteed to be safe under concurrent access.  Exceptions, now made
+thread-safe:
+
+- =bclib='s exception chain (=BcTRY_CurrentEnvironment=) is *thread-local*:
+  each thread has its own TRY/HANDLER stack.
+- =BcRandom_fromfile= serialises its seed-file read-modify-write under a mutex.
+
+Process-wide caveats that remain (use single-threaded or guard yourself):
+- =BcCStr_RepeatChar= / =BcCStr_Terminate= return pointers into a thread-local
+  static buffer; a caller must not hold two results of the same function at once.
+- The =bplib=/=bolib= delete pools are process-global and unsynchronised.
+
+* bclib --- exceptions and contracts
+
+** The exception mechanism (BcExcept)
+
+#+begin_src c
+BcTRY {
+    ... code that may BcRAISE(code, data1, data2) ...
+} BcHANDLER {
+    /* BcExcept_Code(), BcExcept_Data1(), BcExcept_Data2() describe it. */
+} BcENDTRY;
+#+end_src
+
+Rules (violating them corrupts the handler stack):
+- Every =BcTRY= must be matched by exactly one =BcENDTRY=.
+- =BcRETURNVALUE= / =BcRETURNVOID= may only be used *inside* a live =BcTRY=
+  (they pop the current frame); never after =BcENDTRY=.
+- The chain is thread-local, so a =BcRAISE= is caught by the nearest =BcTRY=
+  *on the same thread*.
+
+** Exception payload convention
+
+=data1= and =data2= are =const void*=.  Several modules pass a *small integer*
+(e.g. a size or an index) by casting it through a pointer-sized integer:
+
+#+begin_src c
+BcRAISE(BcMem_eRequestedNullSize, (void*)(CARDPTR)size, NIL);
+/* The handler must read it back the same way --- it is NOT a pointer: */
+CARD32 size = (CARD32)(CARDPTR)BcExcept_Data1();
+#+end_src
+
+** BcCStr / BcString notes
+
+- =BcCStr_Terminate(string, length)= returns up to =length= characters in a
+  thread-local static buffer; the caller must not hold two such results at once.
+- =BcString= functions validate and clamp indices/lengths; an out-of-range
+  request is clamped or raises =BcString=/=BcList= =eBadIndex=, never overruns.
+
+* benlib --- character encodings
+
+** The char-name vocabulary (the key concept)
+
+Every encoding table maps a byte value (0..255) to a *PostScript glyph name*
+(="hyphen"=, ="asterisk"=, ="eacute"=, ...).  Conversion between two encodings
+is done *by name*: byte -> name in the source encoding, name -> byte in the
+target encoding.  Therefore:
+
+- The *same* character must use the *same* name in every table, or it will not
+  round-trip (e.g. ASCII and ISO-Latin-1 both use ="hyphen"= for =0x2D=).
+- The approximation table (=approxim.c=) maps each name to an ASCII fallback
+  (="asterisk"= -> ="*"=) and is *binary-searched*, so it must stay sorted by
+  name.
+
+To add an encoding: write =enc<name>.c= with a 256-entry table of glyph names
+(reusing existing names), and register it in =BenInitialize= (=Bencoding.c=).
+
+** A conversion
+
+#+begin_src c
+BenEncodingTableT*  from = BenEncodingTableNamed("ascii");
+BenEncodingTableT*  to   = BenEncodingTableNamed("isolatin1");
+BenConversionTableT conv;
+BenBuildConversionTable(BenMode_Normal, from, to, /*approx*/0, /*replacement*/"?", &conv);
+BcString_T result = BenConvertString(&conv, "café");   /* re-encoded bytes */
+#+end_src
+
+Supported encodings include ASCII, ISO-Latin-1, Macintosh, MS-DOS (CP437),
+MS-Windows (CP1252), NeXTSTEP, PostScript-Standard, Symbol, EBCDIC, IBM BCD,
+Honeywell 200/2000 and 600/6000 SSF, and Univac Field Data.
+
+* bplib / bolib --- the ownership (reference-counting) contract
+
+Both the C++ (=BpObject=) and Objective-C (=BoObject=) roots use *manual
+reference counting* with a deferred-deletion *delete pool* (an autorelease-like
+mechanism).
+
+- A freshly created object has =useCount == 0= and is *owned by the delete
+  pool*: it will be freed at the next pool drain unless someone retains it.
+- =retain= increments the count (the first =retain= removes the object from the
+  pool); =release= decrements it (reaching 0 re-adds it to the pool).
+- *Balance every retain with a release.*  Over-release is a bug:
+  =BpObject::release= raises =BpObject_eOverRelease=; =BoObject= clamps it.
+- Methods that *return* an object you did not create generally return an
+  unretained, pool-owned object (e.g. =BpDict::allKeys=): retain it if you need
+  it to outlive the next pool drain.
+- Drain the pool with =BpObject_ProcessDeletePool= (C++) /
+  =[BoObject processReleasePool]= (Objective-C) at a safe point (e.g. once per
+  event-loop iteration).
+
+The =assign(var, value)= macro (=BoObject.h=) encapsulates the
+release-old / set / retain-new dance for instance-variable assignment.
+
+=BoList= retains its elements; =BoListNoRetain= does not (use it only for
+back-references whose lifetime you manage, to avoid dangling pointers).
+
+* bprib --- the RIB key (mod 97)
+
+A French RIB is =banque(5) guichet(5) compte(11) clé(2)=.  Letters in the
+account number are folded to digits (A,J -> 1 ... I,R -> 9, S -> 2 ... Z -> 9).
+The 2-digit key makes the whole 23-digit number divisible by 97:
+
+: N    = digits(banque . guichet . compte . "00")
+: clé  = (N mod 97 == 0) ? 0 : 97 - (N mod 97)
+
+Worked example (La Banque Postale):
+
+: 20041 01005 0500013M026  ->  clé = 06
+
+#+begin_src cpp
+BpRIB* r = NEW(BpRIB);
+r->setBanque("20041"); r->setGuichet("01005"); r->setCompte("0500013M026");
+const char* key = r->cle();          /* "06" */
+#+end_src
+
+This is the legacy RIB; the modern IBAN uses the same 97 check over the whole
+(country-prefixed) number.
+
+* bpcombi --- the enumeration protocol
+
+=BpSetEnumerator= subclasses (=BpCombination=, =BpArrangementSansRepeat=,
+=BpArrangementWithRepeat=) enumerate index tuples lazily:
+
+#+begin_src cpp
+BpCombination* c = NEW(BpCombination);
+c->baseCardinal(n);      /* choose from {0 .. n-1} */
+c->elementSize(k);       /* tuples of k indices    */
+c->reset();
+CARD32 choice[K];
+BOOLEAN last;
+do {
+    last = c->getNextElement(choice);   /* fills choice; TRUE on the last one */
+    use(choice, k);
+} while(!last);
+#+end_src
+
+- =cardinal()= is the total number of tuples (=C(n,k)= for combinations,
+  =n!/(n-k)!= for arrangements without repeat, =n^k= with repeat).
+- =getNextElement= yields exactly =cardinal()= tuples and returns =TRUE= on the
+  last; =done()= is =!atBegining() && index()==cardinal()=.
+- The counts can be astronomically large, but enumeration is lazy: only the
+  current =elementSize= indices are stored.

@@ -2,7 +2,21 @@
 #+TITLE: docs: org-mode → pdf + html + info + man toolchain
 #+DATE: 2026-06-20
 
-* TODO [#B] Set up the documentation build (org → pdf/html/info/man)  :doc:build:
+* DONE [#B] Set up the documentation build (org → pdf/html/info/man)  :doc:build:
+  RESOLUTION (2026-06-20):
+  - Added doc/ with doc/Makefile that exports each *.org to all four formats via
+    emacs --batch (ox-html, ox-texinfo -> makeinfo for .info, texi2pdf for .pdf)
+    and pandoc (-> man .7). Targets: all/html/info/pdf/man/clean/install; install
+    drops files under $(PREFIX)/share/{doc/common,info,man/man7} and runs
+    install-info. The doc build is optional and separate from the library build.
+  - Wired optional "doc" / "install-doc" passthrough targets into the top
+    Makefile (kept out of "all").
+  - Generated artifacts are gitignored; only the *.org sources and Makefile are
+    tracked.
+  Validated: "make doc" (and "cd doc; make") produce a valid PDF 1.7, an .info
+  with a Top node, an HTML page, and a man page that renders; the main library
+  build is unaffected.
+  The content lives in doc/common.org --- see issue doc-content-gaps.
 
 Preference: documentation source is *org-mode*; from each =.org= we generate
 =pdf= (reading), =html= and =info= (browsing in Emacs), and =man= pages.

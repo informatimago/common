@@ -2,7 +2,26 @@
 #+TITLE: docs: content gaps to fill (contracts, algorithms, thread-safety)
 #+DATE: 2026-06-20
 
-* TODO [#B] Write the missing documentation content  :doc:content:
+* DONE [#B] Write the missing documentation content  :doc:content:
+  RESOLUTION (2026-06-20): Wrote doc/common.org (exported to pdf/html/info/man
+  by the doc toolchain) covering the cross-cutting material that was missing:
+  - Whole-tree: a thread-safety statement and a build/usage quickstart.
+  - bclib: the BcExcept TRY/RAISE contract (balanced TRY/ENDTRY, thread-local
+    chain, BcRETURN* rules) and the data1/data2 "integer-through-a-pointer"
+    payload convention; the BcCStr static-buffer caveat.
+  - benlib: the PostScript char-name vocabulary (the central concept), a worked
+    conversion example, the "same name per code point" and sorted-approxim-table
+    rules, and the supported encodings.
+  - bplib/bolib: the ownership / reference-counting contract (init => useCount 0
+    owned by the delete pool; retain/release balance; over-release raises;
+    returned objects are pool-owned; when to drain; the assign() macro;
+    BoList vs BoListNoRetain).
+  - bprib: the mod-97 RIB key formula with a worked example (-> 06).
+  - bpcombi: the lazy getNextElement/done protocol and the cardinal() formulae.
+  Also fixed the stale BoArray.h resize: precondition (done with bolib-bugs) and
+  the bjlib doc typos noted there.
+  Per-module standalone .org files can be split out later; for now a single
+  umbrella document carries the content and builds cleanly.
 
 The per-function header comments are unusually good (PRE/POST/RETURN/RAISE).
 What's missing is the *cross-cutting* documentation a user needs to use each
