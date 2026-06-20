@@ -283,6 +283,12 @@ METHOD(BpObject,retain,(void),BpObject*)
 METHOD(BpObject,release,(void),BpObject*)
 {
     fRetainCount--;
+    if(fRetainCount<0){
+        /* Over-release: fRetainCount is signed, so without this the count just
+           goes negative, the ==0 test below never fires and the object is
+           leaked instead of the bug being diagnosed. */
+        BcRAISE(BpObject_eOverRelease,(void*)this,(void*)(size_t)fRetainCount);
+    }
     if(fRetainCount==0){
         deletePool->addObject(this);
     }

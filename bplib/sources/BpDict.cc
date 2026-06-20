@@ -328,8 +328,8 @@ protected:
     METHOD(BpDict,addEntriesFromDictionary,(BpDict* otherDictionary),void)
     {
             BpArray*            keys;
-            INT32               i,cnt;
-                
+            CARD32              i,cnt; /* size() is CARD32; INT32 truncated it. */
+
         keys=otherDictionary->allKeys();
         cnt=keys->size();
         for(i=0;i<cnt;i++){

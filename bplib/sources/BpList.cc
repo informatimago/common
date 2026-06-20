@@ -276,7 +276,7 @@ extern "C"{
             BcRAISE(BpList_eBadIndex,(void*)this,(void*)(size_t)index);
         }
         oldObject=elements[index];
-        while(index<lcount){
+        while(index+1<lcount){ /* was index<lcount: read elements[lcount] (OOB). */
             elements[index]=elements[index+1];
             INC(index);
         }

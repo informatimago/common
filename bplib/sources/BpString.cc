@@ -128,7 +128,7 @@ METHOD(BpString,printOnLevel,(FILE* file,CARD32 level),void)
     BpString_SUPER::printOnLevel(file,level);
     PRINTONLEVEL(file,level,"%p",data,(void*)data);
     if(data!=NIL){
-        PRINTONLEVEL(file,level,"\"%s\"",*data,data);
+        PRINTONLEVEL(file,level,"\"%s\"",data,data); /* was *data in the name slot */
     }
     PRINTONLEVEL(file,level,"%ld",dlength,dlength);
     PRINTONLEVEL(file,level,"%ld",allocation,allocation);
@@ -286,18 +286,19 @@ METHOD(BpString,positionFrom,(BpString* substring,CARD32 index),CARD32)
     CARD32           i;
     CARD32           max;
         
-    max=dlength-substring->dlength;     
-    if(index<0){
-        pos=0;
-    }else{
-        pos=index;
+    if(substring->dlength>dlength){
+        return(MAX_CARD32); /* needle longer than haystack: dlength-x underflows */
     }
+    max=dlength-substring->dlength;
+    pos=index; /* index is CARD32; the old "index<0" test was always false. */
     while(pos<=max){
         i=0;
-        while(data[pos+i]==substring->data[i]){
+        /* Bound by substring->dlength: otherwise a tail match where both NUL
+           terminators align (0==0) keeps reading past both buffers. */
+        while((i<substring->dlength)&&(data[pos+i]==substring->data[i])){
             INC(i);
         }
-        if(substring->data[i]==(char)0){
+        if(i==substring->dlength){
             return(pos);
         }
         INC(pos);

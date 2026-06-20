@@ -226,10 +226,14 @@ METHOD(BpArray,replaceObjectAtWith,
 }//replaceObjectAt:with:;
 
 
+/* PRECONDITION: the caller must grow the array first (resize(size+1)); this
+   method shifts within lsize and does NOT grow it, mirroring removeObjectAt
+   which clears the last slot without shrinking.  BpDict::setObjectForKey does
+   the resize.  Called WITHOUT the prior resize, the last element is dropped. */
 METHOD(BpArray,insertObjectAt,(BpObject* newObject,CARD32 index),BpArray*)
 {
     CARD32              i;
-            
+
     if(index>=lsize){
         BcRAISE(BpArray_eBadIndex,(void*)this,(void*)(size_t)index);
     }

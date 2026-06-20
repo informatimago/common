@@ -78,6 +78,7 @@ class BpList;
 #define BpObject_eDeleteRetained    (10080) // BpObject*,INT32 releaseCount
 #define BpObject_eDeleteInternal    (10081) // BpObject*,INT32 condition
 #define BpObject_eSubclassResponsibility    (10082) //BpObject*,char* method
+#define BpObject_eOverRelease       (10083) // BpObject*,INT32 releaseCount
 
 #define BpObject_ProcessDeletePool BpObject::processDeletePool
     // Obsolete: call BpObject::processDeletePool();

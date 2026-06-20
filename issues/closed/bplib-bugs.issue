@@ -2,7 +2,25 @@
 #+TITLE: bplib: collection, refcount, and copy-semantics bugs
 #+DATE: 2026-06-20
 
-* TODO [#A] bplib: collection + refcount bugs  :bplib:memory:cpp:
+* DONE [#A] bplib: collection + refcount bugs  :bplib:memory:cpp:
+  RESOLUTION (2026-06-20):
+  - BpList::removeObjectAt: shift while index+1<lcount (was index<lcount, read
+    elements[lcount]).
+  - BpObject::release: added a fRetainCount<0 guard raising a new
+    BpObject_eOverRelease (signed count silently went negative and leaked).
+  - BpDict::addEntriesFromDictionary: CARD32 i,cnt (INT32 truncated size()).
+  - BpString::positionFrom: guard needle-longer-than-haystack (CARD32 underflow)
+    and bound the inner match by substring->dlength (tail-match over-read).
+  - BpString::printOnLevel: pass `data` (not `*data`) in the field-name slot.
+  - BpArray::insertObjectAt: documented the caller-manages-size precondition
+    (it shifts within lsize, mirroring removeObjectAt which clears without
+    shrinking; BpDict resizes first). NOTE: the agent's "BpDict double-shrink"
+    finding was a FALSE POSITIVE --- BpArray::removeObjectAt does not decrement
+    lsize, so removeObjectForKey's resize(size-1) is correct; left as-is.
+  Validated: list remove at capacity, positionFrom (mid/longer/exact), dict
+  set/get/remove round-trip, and over-release raising.
+  Deferred (low): rule-of-three (copy ctor/assignment) on the owning classes ---
+  a larger, separate change; the destructors are already virtual.
 
 ** Findings — bugs
 
