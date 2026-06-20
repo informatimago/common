@@ -47,7 +47,14 @@
 
 TARGET  := $(shell uname)
 PREFIX  := /usr/local
-MAKEDIR := $(HOME)/src/public/common/makedir
+
+# Locate this top-level Makefile's own directory so the build does not depend
+# on $(HOME).  Using $(HOME) broke "sudo make install", where $(HOME) becomes
+# /root and MAKEDIR pointed at a non-existent /root/src/public/common/makedir.
+# These are simple (:=) assignments, so passing COMMON=/MAKEDIR= on the make
+# command line still overrides them.
+COMMON  := $(patsubst %/,%,$(dir $(realpath $(lastword $(MAKEFILE_LIST)))))
+MAKEDIR := $(COMMON)/makedir
 
 MODULES= \
 	bclib  bjlib  benlib \
