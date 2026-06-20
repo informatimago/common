@@ -135,6 +135,15 @@ extern void* bjdict_entry_object(const bjdict_entry_t* that);
     }/*bjdict_entry_key*/
 
 
+    /* Read-only key access for internal comparisons.  Unlike the public
+       bjdict_entry_key(), it returns the stored key directly instead of an
+       allocated copy (which leaked one bjstring per comparison). */
+    static const bjstring_t* bjdict_entry_key_nocopy(const void* entry)
+    {
+        return(((const bjdict_entry_t*)entry)->myKey);
+    }/*bjdict_entry_key_nocopy*/
+
+
     void* bjdict_entry_object(const bjdict_entry_t* that)
     {
         return(that->myObject);
@@ -285,7 +294,7 @@ extern void* bjdict_entry_object(const bjdict_entry_t* that);
             return(no);
         }
         num=(curmin+curmax)/2;
-        order=compare(bjdict_entry_key(bjarray_element_at(entries,num)),key);
+        order=compare(bjdict_entry_key_nocopy(bjarray_element_at(entries,num)),key);
         while((order!=0)&&(curmin!=num)){
             if(order>0){
                 /* the order returned by compare_key is inverted. */
@@ -294,7 +303,7 @@ extern void* bjdict_entry_object(const bjdict_entry_t* that);
                 curmin=num;
             }
             num=(curmin+curmax)/2;
-            order=compare(bjdict_entry_key(bjarray_element_at(entries,num)),
+            order=compare(bjdict_entry_key_nocopy(bjarray_element_at(entries,num)),
                           key);
         }
         if((0<num)&&(order>0)){

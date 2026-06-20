@@ -2,7 +2,31 @@
 #+TITLE: bjlib: unsigned-underflow and refcount bugs
 #+DATE: 2026-06-20
 
-* TODO [#A] bjlib: string/array/object bugs  :critical:bjlib:memory:
+* DONE [#A] bjlib: string/array/object bugs  :critical:bjlib:memory:
+  RESOLUTION (2026-06-20):
+  - bjstring.c searches: added a "needle longer than haystack" guard to all four
+    search_forward/backward (+insensitive); the insensitive ones did OOB
+    strncasecmp, the sensitive ones hung. Rewrote the two backward loops from
+    "while(0<=pos)" (unsigned, never false) to a for(;;) that breaks at pos==0.
+  - bjstring_char_index: return 0 instead of dereferencing the null `that`.
+  - bjstring_substitute_from: guard empty/oversize match; detect "not found" as
+    from>=length (the old `from<0` was dead on unsigned).
+  - bjstring_copy_from_length: clamp idx then copylen (no unsigned underflow).
+  - bjstring_is_suffix(+insensitive): guard suffix longer than string.
+  - bjarray_remove_element_at: clear the vacated slot (was copying a stale
+    over-referenced pointer). Also fixed bjarray_add_element growth: size*2 was
+    stuck at 0 for bjarray_new(0), so the array never allocated.
+  - bjobject: release clamps a negative retain_count and does not re-enqueue an
+    already-pending object (double add => double free); bjobject_new NULL-checks
+    malloc and fixes the globles()->globals() typo (broke TRACE_OBJECTS builds).
+  - bjstring_list join: return empty for an empty list (count-1 underflow).
+  - bjstring_file read_a_line: guard length>0 before data[length-1].
+  - bjdict: internal binary-search comparisons use a no-copy key accessor instead
+    of bjdict_entry_key() (which leaked one bjstring per comparison).
+  Validated with functional tests (searches incl. longer-needle, backward
+  termination, is_suffix, substitute, array remove first/mid/last).
+  Deferred (low): remaining dead if(idx<0) guards on unsigned params; some
+  unchecked malloc in minor helpers.
 
 bjlib uses *unsigned* lengths/indices, so the many =if(x<0)= guards are dead and
 =length - other_length= underflows to a huge value → out-of-bounds scans.

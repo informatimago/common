@@ -263,11 +263,12 @@ LEGAL
 
     void* bjobject_new(unsigned int size,const bjobject_methods_t* methods)
     {
-        if(size<0){
-            return(0);
-        }else{
+        {
             bjobject_t* that=(bjobject_t*)malloc(sizeof(bjobject_t)
                                                  -sizeof(that->data)+size);
+            if(that==0){
+                return(0); /* out of memory */
+            }
             that->retain_count=0;
             if(methods==0){
                 methods=&nop_methods;
@@ -275,7 +276,7 @@ LEGAL
             that->methods=methods;
             bcpurgatory_add_object(globals()->to_delete,that);
 #ifdef TRACE_OBJECTS
-            bcpurgatory_add_object(globles()->instances,that);
+            bcpurgatory_add_object(globals()->instances,that); /* was globles() */
 #endif
 #ifdef TRACE_RETAINS
             fprintf(stderr,
@@ -364,7 +365,12 @@ LEGAL
                 that->retain_count,that->methods->class_name,(int)that);
         if(that->retain_count<0){ int i=0;i=1/i; }
 #endif
-        if(that->retain_count==0){
+        if(that->retain_count<0){
+            /* Over-release: the object is already pending deletion in to_delete
+               from the previous 1->0 release.  Clamp and do NOT enqueue it
+               again (a double add becomes a double free in delete_objects). */
+            that->retain_count=0;
+        }else if(that->retain_count==0){
             bcpurgatory_add_object(globals()->to_delete,that);
         }
     }/*bjobject_release*/

@@ -217,12 +217,10 @@ LEGAL
             that->elements[idx]=that->elements[idx+1];
             idx++;
         }
-        /* idx==that->count */
-        if(idx<that->size-1){
-            that->elements[idx]=that->elements[idx+1];
-        }else{
-            that->elements[idx]=0;
-        }
+        /* idx==that->count: clear the vacated last slot.  The old code copied
+           elements[idx+1] here, re-introducing a stale (over-referenced)
+           pointer. */
+        that->elements[idx]=0;
         while((that->count>0)&&(that->elements[that->count-1]==0)){
             that->count--;
         }
@@ -236,7 +234,8 @@ LEGAL
     {
         if(element!=0){
             if(that->count==that->size){
-                bjarray_set_size(that,that->size*2);
+                /* size*2 is stuck at 0 for a bjarray_new(0); grow to 1. */
+                bjarray_set_size(that,(that->size==0)?1:(that->size*2));
             }
             that->elements[that->count]=element;
             bjobject_retain(that->elements[that->count]);

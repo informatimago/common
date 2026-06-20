@@ -358,7 +358,7 @@ LEGAL
                                      unsigned int fromIdx)
     {
         if(that==0){
-            return(that->length);
+            return(0); /* was: return(that->length) --- dereferenced the null. */
         }
         if(fromIdx<0){
             fromIdx=0;
@@ -510,6 +510,9 @@ LEGAL
         }else{
             pos=idx;
         }
+        if(substring->length>that->length){
+            return(that->length); /* needle longer than haystack: not found */
+        }
         max=that->length-substring->length;
         while(pos<=max){
             i=0;
@@ -544,6 +547,9 @@ LEGAL
         }else{
             pos=idx;
         }
+        if(substring->length>that->length){
+            return(that->length); /* needle longer than haystack: not found */
+        }
         max=that->length-substring->length;
         while(pos<=max){
             if(strncasecmp(that->data+pos,
@@ -571,13 +577,16 @@ LEGAL
         }else if((substring==0)||(idx<0)){
             return(that->length);
         }
+        if(substring->length>that->length){
+            return(that->length); /* needle longer than haystack: not found */
+        }
         max=that->length-substring->length;
         if(max<idx){
             pos=max;
         }else{
             pos=idx;
         }
-        while(0<=pos){
+        for(;;){
             i=0;
             while((i<substring->length)
                   &&(that->data[pos+i]==substring->data[i])){
@@ -585,6 +594,9 @@ LEGAL
             }
             if(i==substring->length){
                 return(pos);
+            }
+            if(pos==0){
+                break; /* unsigned pos: stop here, "while(0<=pos)" never ended. */
             }
             pos--;
         }
@@ -606,16 +618,22 @@ LEGAL
         }else if((substring==0)||(idx<0)){
             return(that->length);
         }
+        if(substring->length>that->length){
+            return(that->length); /* needle longer than haystack: not found */
+        }
         max=that->length-substring->length;
         if(max<idx){
             pos=max;
         }else{
             pos=idx;
         }
-        while(0<=pos){
+        for(;;){
             if(strncasecmp(that->data+pos,
                            substring->data,substring->length)==0){
                 return(pos);
+            }
+            if(pos==0){
+                break; /* unsigned pos: stop here, "while(0<=pos)" never ended. */
             }
             pos--;
         }
@@ -638,7 +656,10 @@ LEGAL
         if((that==0)||(string==0)){
             return;
         }
-        if(idx+copylen>string->length){
+        if(idx>string->length){ /* clamp first: lengths are unsigned. */
+            idx=string->length;
+        }
+        if(copylen>string->length-idx){ /* avoids idx+copylen overflow too. */
             copylen=string->length-idx;
         }
         if(copylen<=0){
@@ -749,12 +770,16 @@ LEGAL
                                           unsigned int occurences)
     {
         unsigned int count=0;
+        if((that==0)||(match==0)||(match->length==0)){
+            return(0);
+        }
         if(occurences==0){
             occurences=UINT_MAX;
         }
-        while((occurences!=0)&&(from<that->length-match->length)){
+        while((occurences!=0)&&(match->length<=that->length)
+              &&(from<=that->length-match->length)){
             from=bjstring_search_forward(that,match,from);
-            if(from<0){
+            if(from>=that->length){ /* not found (was the dead unsigned from<0). */
                 return(count);
             }
             count++;
@@ -832,6 +857,9 @@ LEGAL
         if((that==0)||(suffix==0)){
             return(no);
         }
+        if(suffix->length>that->length){ /* else the pointer underflows the buffer. */
+            return(no);
+        }
         return(strncmp(that->data+that->length-suffix->length,
                        suffix->data,suffix->length)==0);
     }/*bjstring_is_suffix*/
@@ -841,6 +869,9 @@ LEGAL
                                         const bjstring_t* suffix)
     {
         if((that==0)||(suffix==0)){
+            return(no);
+        }
+        if(suffix->length>that->length){ /* else the pointer underflows the buffer. */
             return(no);
         }
         return(strncasecmp(that->data+that->length-suffix->length,

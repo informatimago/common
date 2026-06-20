@@ -102,6 +102,9 @@ LEGAL
             }
             separator=space;
         }
+        if(bjarray_count(strings)==0){
+            return(result); /* empty list: empty join (count-1 would underflow). */
+        }
         for(i=0;i<bjarray_count(strings);i++){
             length+=bjstring_length(bjarray_element_at(strings,i));
         }

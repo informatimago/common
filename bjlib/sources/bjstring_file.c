@@ -138,7 +138,9 @@ LEGAL
             */
 
             if(grow){
-                while(that->data[that->length-1]!='\n'){
+                /* length>0 guard: a leading NUL byte gives strlen()==0, and
+                   data[length-1] would then read data[-1]. */
+                while((that->length>0)&&(that->data[that->length-1]!='\n')){
                     bjstring_set_capacity_copy(that,that->allocation*2,yes);
                     if(fgets(that->data+that->length,
                              (signed)(that->allocation-that->length),input)==0){
