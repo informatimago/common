@@ -209,7 +209,7 @@ LEGAL
             BcRAISE(BoListNoRetain_eBadIndex,(void*)self,(void*)(CARDPTR)idx);
         }
         oldObject=elements[idx];
-        while(idx<count){
+        while(idx+1<count){ /* was idx<count: read elements[count] (OOB). */
             elements[idx]=elements[idx+1];
             INC(idx);
         }

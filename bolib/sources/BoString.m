@@ -143,6 +143,9 @@ LEGAL
 
 -(id)getString:(char*)string
 {
+    /* WARNING: there is no destination-size parameter, so the caller's buffer
+       MUST hold at least [self length]+1 bytes.  Use -length first to size it.
+       (Fixing this safely needs an API change: -getString:size:.) */
     BcMem_Copy(data,string,(CARD32)length*(CARD32)sizeof(char));
     string[length]=(char)0;
     return(self);
@@ -186,14 +189,25 @@ LEGAL
     }else if(length<idx){
         idx=length;
     }
-    nLength=length+substring->length;
-    if(nLength>=allocation){
-        /* SEE: We copy some char of self twice !*/
-        [self setCapacity:nLength+1 copy:TRUE];
+    {
+            INT32       subLength=substring->length;
+            char*       subData;
+
+        /* Snapshot the substring's bytes first.  setCapacity may reallocate
+           self->data, and if substring==self (e.g. [s append:s]) the shift
+           below would otherwise corrupt the source.  BcMem_Copy is overlap-safe
+           (memmove), so the tail shift in place is fine. */
+        nLength=length+subLength;
+        subData=(char*)BcMem_Allocate((CARD32)(subLength+1)*(CARD32)sizeof(char));
+        BcMem_Copy(substring->data,subData,(CARD32)subLength*(CARD32)sizeof(char));
+        if(nLength>=allocation){
+            [self setCapacity:nLength+1 copy:TRUE];
+        }
+        BcMem_Copy(data+idx,data+idx+subLength,(CARD32)(length-idx+1)*(CARD32)sizeof(char));
+        BcMem_Copy(subData,data+idx,(CARD32)subLength*(CARD32)sizeof(char));
+        BcMem_Deallocate((void**)&subData);
+        length=nLength;
     }
-    BcMem_Copy(data+idx,data+idx+substring->length,(CARD32)(length-idx+1)*(CARD32)sizeof(char));
-    BcMem_Copy(substring->data,data+idx,(CARD32)(substring->length)*(CARD32)sizeof(char));
-    length=nLength;
     return(self);
 }/*insert:at:;*/
 
@@ -229,10 +243,12 @@ LEGAL
     }
     while(pos<=max){
         i=0;
-        while(data[pos+i]==substring->data[i]){
+        /* Bound by substring->length: otherwise a tail match where both NUL
+           terminators align (0==0) keeps reading past both buffers. */
+        while((i<substring->length)&&(data[pos+i]==substring->data[i])){
             INC(i);
         }
-        if(substring->data[i]==(char)0){
+        if(i==substring->length){
             return(pos);
         }
         INC(pos);

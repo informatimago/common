@@ -56,12 +56,12 @@ OBJCSOURCES := \
 	BoObject.m \
 	BoString.m 
 
-ifeq (`uname`,Darwin)
-OBJCSOURCES += BoTimer.next.m
-endif
-
-ifeq (`uname`,Linux)
-#OBJCSOURCES += BoTimer.posix.m
+# $(TARGET) is set from $(shell uname) by the top Makefile.  (Backticks inside
+# ifeq do NOT run a shell, so the old "ifeq (`uname`,Darwin)" never matched.)
+ifeq ($(TARGET),Darwin)
+OBJCSOURCES += BoTimer-next.m
+else
+OBJCSOURCES += BoTimer-posix.m
 endif
 
 CPLUSSOURCES=	

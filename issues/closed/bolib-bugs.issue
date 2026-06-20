@@ -2,7 +2,32 @@
 #+TITLE: bolib: collection, string, refcount, and timer bugs
 #+DATE: 2026-06-20
 
-* TODO [#A] bolib: memory and refcount bugs  :bolib:memory:objc:
+* DONE [#A] bolib: memory and refcount bugs  :bolib:memory:objc:
+  RESOLUTION (2026-06-20):
+  - BoListNoRetain::removeObjectAt: shift while idx+1<count (was reading
+    elements[count]).
+  - BoString::insert:at:: snapshot the substring bytes first, so a self-insert
+    ([s append:s]) is correct and there is no aliasing/use-after-free; the tail
+    shift is overlap-safe now that BcMem_Copy is memmove (bclib fix).
+  - BoString::position:from:: bound the inner match by substring->length
+    (tail-match over-read).
+  - BoString::getString:: documented that the caller's buffer must hold
+    length+1 bytes (no size param; safe fix needs an API change).
+  - BoArray.h: corrected the resize: PRE (it does handle shrinking).
+  - BoTimer (per DECISION): renamed BoTimer.posix.m/.macintosh.m/.next.m to
+    BoTimer-posix.m / -macintosh.m / -next.m (no multi-dot names); reimplemented
+    BoTimer-posix.m for POSIX using timer_create + SIGEV_THREAD (was NeXT/Mach
+    cthreads + sigvec, which did not compile); fixed the bolib Makefile's broken
+    "ifeq (`uname`,...)" to ifeq ($(TARGET),...) and enabled the POSIX timer on
+    non-Darwin.
+  Validated: position (mid/exact/longer), insert, self-append ("xyxy"), list
+  remove, and a one-shot BoTimer firing.
+  Assessed/deferred: BoObject release is already balanced (retain removes from
+  the pool at 1, release adds at 0, over-release clamps <0), so no double-add in
+  the normal paths --- a per-object pool-membership flag (full dedup) is a larger
+  change, deferred. -copy yielding a BoListNoRetain and changed: passing a long
+  via perform:with:with: are low-severity and left as-is (the latter is correct
+  on LP64).
 
 ** Findings
 

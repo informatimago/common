@@ -59,7 +59,8 @@ LEGAL
     
     -(void)resize:(CARD32)newSize;
         /*
-            PRE:        newSize>[self size]
+            PRE:        (none --- newSize may be smaller than [self size];
+                         the implementation handles shrinking.)
                         m=Minimum([self size],newSize)
                         for each i in [0..m-1], t[i]=[self objectAt:i];
             POST:       [self size]=newSize,
