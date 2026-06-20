@@ -1,0 +1,83 @@
+# -*- mode: org -*-
+#+TITLE: build system: correctness, parallelism, portability
+#+DATE: 2026-06-20
+
+* TODO [#B] makedir: build-system correctness + portability  :build:make:
+
+Already fixed (do not re-do): absolute =APPLY=$(MAKEDIR)/apply=; =install:: all=;
+cross-module =-I= paths; =MAKEDIR=/=COMMON= derived from the Makefile's own path
+(=sudo make install= now works).
+
+** Findings — correctness
+
+*** [high] ifeq (`uname`,Darwin) never matches — platform sources dropped (bolib/sources/Makefile:59,63; bplib/sources/Makefile:84)
+=ifeq= compares *strings at parse time* and does not run a shell, so the
+backticks are literal: =ifeq (`uname`,Darwin)= is always false. On Darwin,
+=BoTimer.next.m= is never added to =OBJCSOURCES= (yet =BoTimer.h= is still
+installed — header with no implementation). Fix: =ifeq ($(TARGET),Darwin)=
+(=TARGET= is already =$(shell uname)=) or =ifeq ($(shell uname),Darwin)=.
+
+*** [high] all :: depend libraries programs is order-unsafe; reason for the historic two-pass (makedir/common:117)
+=Makefile.depend= is pulled with =-include= at parse time; on a clean tree it is
+absent, so the first build has no header deps, and the file built by a recipe of
+=all= is not re-read in the same run. This is why a second =make depend= / =make=
+was historically needed. Under =make -j= the three =::= prerequisites are
+unordered, so =libraries=/=programs= can compile while =depend= is still writing.
+Fix: make =Makefile.depend= a proper *restartable include* (=include
+Makefile.depend= + a rule to build it), or drop =depend= from =all= and order it.
+
+*** [high] No inter-module ordering — parallel install races (makedir/common:186; project:52-71)
+Tests link against the *installed* libs (=bplib/tests/BpDictTest/sources/
+Makefile:79= → =$(PREFIX)/lib/bplib/…=) and =bplib= needs =bclib=. The recursion
+gives make no edges between modules, so =make -j install= can build a dependent
+before its prerequisite is installed. The ordered =MODULES= list is not enough.
+Fix: add explicit module-level dependencies.
+
+*** [medium] LD = $(CC) links C++/ObjC programs with the C driver (targetLinux:52; common:153)
+A C++ program without an explicit =_LD= links with =gcc= (no C++ runtime). The
+tests work around it with =BpDictTest_LD=$(CCPLUS)= — proving the default is a
+footgun. Fix: pick =LD= from the languages present, or document it as mandatory.
+
+*** [medium] install recipes mask failures with || true (common:189,195,201,207,218; program:106; library:101-106)
+=mkdir … 2>/dev/null || true= and =install … || true= swallow real errors
+(permission denied, read-only =$(PREFIX)=), so a failed install reports success.
+Drop the blanket =|| true= and let errors propagate.
+
+*** [medium] dependency generation via apply/gcc -M is fragile (makedir/apply:46,51-53; common:223-236)
+=echo $* | xargs … $command= re-splits and globs unquoted flags; the BSD
+fallback re-invokes the compiler per file; =gcc -M= (not =-MM=) pulls system
+headers and breaks on a not-yet-generated header (e.g. =version.h=) or paths with
+spaces. Fix: generate deps with =$(CC) -MM -MT $@ -MF= directly per source and
+retire =apply=; consider =-MG=.
+
+** Findings — portability / cruft
+
+*** [medium] Hardcoded /usr/bin/gcc, /usr/bin/g++ (targetLinux:58,68,78)
+Absolute paths ignore =$PATH= and break on Nix/cross/clang-only systems.
+=targetDarwin= correctly uses bare =gcc=. Use =CC=gcc=/=cc= and let users override.
+
+*** [low] % : %.c / % : %.cc link patterns can mislink (targetLinux:64-65,84-85)
+These single-source "build an exe from one source" rules can be picked instead of
+the intended =$(..._OBJECTS)=/=$(..._LIBRARIES)= rule. Prefer deleting them.
+
+*** [low] Obsolete cruft to remove or mark
+=makedir/library= and =makedir/program= =all::= print "deprecated… exit 1" after
+building; =*-template-makefile= and =bprib/tests/ribtest/sources/Makefile=
+(references nonexistent =cc++=, =-arch m68k=, =$(COMMON)/cplusplus/…=) are stale
+and confusing. No =uninstall= target exists; installs accumulate.
+
+** Findings — documentation (see also doc-readme-fixes)
+=makedir/README= documents variables (=SUBPROJECT=/=PROGRAMNAME=/=LIBRARYNAME=)
+that the Makefiles no longer use (real ones: =MODULES=/=PROGRAMS=/=LIBRARIES=/
+=*_OBJECTS=/=*_LIBRARIES=). The two-pass-depend requirement, cross-module install
+order, =TARGET=→=target<NAME>= mapping, default =PREFIX=/usr/local=, and the
+=-Werror -pedantic-errors= strictness are all undocumented.
+
+** Plan
+1. Fix the three =ifeq (`uname`,…)= sites (highest leverage, silent on Darwin).
+2. Make =Makefile.depend= a restartable include (kills the two-pass need) and add
+   inter-module dependencies so =make -j= is safe.
+3. Switch dep generation to =$(CC) -MM=; drop =apply=.
+4. Default =LD= sensibly; remove =|| true=; de-hardcode the compiler paths.
+5. Remove/mark obsolete makefiles; add an =uninstall= target.
+6. Rewrite =makedir/README= to match reality (folds into doc-readme-fixes).

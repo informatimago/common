@@ -1,0 +1,36 @@
+# -*- mode: org -*-
+#+TITLE: common — issue tracker
+#+DATE: 2026-06-20
+
+* How this tracker works
+
+Each issue is one file in =issues/open/= with the =.issue= extension and an
+org-mode local-variables line, so it opens in org-mode in Emacs.  When an
+issue is resolved, move the file to =issues/closed/= (e.g. =git mv=) and tick
+its TODO.
+
+Issues were produced by a code review of the whole tree on 2026-06-20
+(GCC 14 / modern libobjc toolchain).  Severities: =critical= (memory-unsafe
+or silently wrong results), =high=, =medium=, =low=.
+
+* Open issues
+
+** Correctness / bugs
+- [[file:open/benlib-convertstring-broken.issue][benlib-convertstring-broken]]   — *critical*: BenConvertString is broken (uninit index, infinite loop/overflow, signed-char index).
+- [[file:open/benlib-encoding-tables.issue][benlib-encoding-tables]]        — encoding-table data errors: missing comma, char-name mismatches, typos break round-tripping.
+- [[file:open/bclib-memory-safety.issue][bclib-memory-safety]]           — BcMem misalignment UB, BcCStr overflow, BcList OOB, BcString bounds.
+- [[file:open/bclib-exceptions-and-globals.issue][bclib-exceptions-and-globals]]  — BcExcept non-reentrant/not thread-safe; BcRandom dead code + unchecked fopen.
+- [[file:open/bjlib-bugs.issue][bjlib-bugs]]                    — unsigned-underflow string searches (OOB), array-remove duplication, refcount/leak.
+- [[file:open/bplib-bugs.issue][bplib-bugs]]                    — BpList OOB remove, BpArray insert, BpDict signedness/double-shrink, release underflow, rule-of-three.
+- [[file:open/bpcombi-enumeration-bugs.issue][bpcombi-enumeration-bugs]]      — done() uses =/== , combination() off-by-one, new[]/delete mismatch, _choice mis-sized.
+- [[file:open/bprib-sprintf-bounds.issue][bprib-sprintf-bounds]]          — unchecked sprintf into fixed buffer in computeCle.
+- [[file:open/bolib-bugs.issue][bolib-bugs]]                    — BoListNoRetain OOB remove, BoString overlap memcpy/UAF, DeletePool double-free, BoTimer.posix won't compile.
+- [[file:open/build-system.issue][build-system]]                  — ifeq backtick platform bug, make -j unsafety, depend two-pass, portability.
+
+** Documentation
+- [[file:open/doc-toolchain-orgmode.issue][doc-toolchain-orgmode]]         — set up org-mode → pdf + html + info + man documentation build.
+- [[file:open/doc-content-gaps.issue][doc-content-gaps]]              — per-module contracts to write (ownership/refcount, thread-safety, encodings, algorithms).
+- [[file:open/doc-readme-fixes.issue][doc-readme-fixes]]              — README mojibake (Latin-1→UTF-8), stale makedir/README variable names.
+
+* Closed issues
+- sudo-make-install — MAKEDIR derived from $(HOME) broke =sudo make install=. Fixed (commit baa8d47).

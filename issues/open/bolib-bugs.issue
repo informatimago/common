@@ -1,0 +1,78 @@
+# -*- mode: org -*-
+#+TITLE: bolib: collection, string, refcount, and timer bugs
+#+DATE: 2026-06-20
+
+* TODO [#A] bolib: memory and refcount bugs  :bolib:memory:objc:
+
+** Findings
+
+*** [critical] BoListNoRetain removeObjectAt: reads one past the array (BoListNoRetain.m:212-213)
+=while(idx<count){ elements[idx]=elements[idx+1]; INC(idx); }= reads
+=elements[count]= when =idx==count-1= (OOB when =count==capacity=), before
+=count-- =. Fix: bound =idx<count-1= (BoArray.m:182 already does this right).
+Same family as BcList/bjarray/BpList.
+
+*** [critical] BoString insert:at: overlapping memcpy + use-after-free on self-insert (BoString.m:189-195)
+- =BcMem_Copy= maps to =memcpy= (non-overlapping), but =insert:at:= uses it to
+  shift the tail forward over itself → corruption. Use a backward-safe move
+  (memmove semantics), and ensure capacity is =nLength+1=.
+- If =substring == self= (e.g. =[s insert:s at:0]= / =append:= of self),
+  =setCapacity:…copy:TRUE= reallocates =self->data=, freeing =substring->data=;
+  the later =BcMem_Copy(substring->data,…)= reads freed memory. Guard against
+  aliasing (copy the substring first, or detect =substring==self=).
+
+*** [high] BoObject release: pool has no dedup → possible double-free (BoObject.m:262-270)
+=release= re-adds the object to =deletePool= on reaching 0, but the pool is not
+deduplicated; over-release / mixed free paths can enqueue the same pointer
+twice, freed twice in =deleteObjects=. Add membership tracking or a =<0= guard
+that raises.
+
+*** [high] Dangling dependants on free (BoObject.m free / changed:)
+An object freed via =DeletePool deleteObjects= is not removed from *other*
+objects' =_dependants= lists, leaving dangling pointers; a later =changed:=
+sends to a freed object. Fix: on free, unregister from all dependees, or have
+=_dependants= hold weak back-references that are cleared.
+
+*** [medium] getString: has no destination size → caller-buffer overflow (BoString.m:144-149)
+Copies =length+NUL= into a caller =char*= with no capacity parameter; any
+smaller buffer overflows. API defect — add a max-size parameter (or return an
+allocated/Bc string).
+
+*** [medium] position:from: unbounded inner scan (BoString.m:232-235)
+Inner loop is not bounded by =substring->length=; relies on NUL terminators and
+can over-read. Bound =i= by =substring->length=.
+
+*** [medium] changed: passes a long as id via perform:with:with: (BoObject.m:316)
+=(id)cause= casts a =long= to a pointer and the receiver reads it back as =long=
+— correct only by LP64 coincidence and ABI luck (see perform: note below). Use a
+typed dispatch rather than =perform:with:with:= for the integer =cause=.
+
+*** [low] BoCompat -perform: calls the IMP untyped (BoObject.m:72-91)
+=IMP imp=objc_msg_lookup(...); return(imp(self,sel,…));= is fine for all-=id=
+selectors on x86-64/ARM64, but selectors taking/returning struct/float/non-=id=
+args are mis-called (ABI). Cast the IMP to the correct signature per arity, and
+prefer not to route non-=id= payloads (the =cause= long) through =perform:=.
+
+*** [low] copy always yields a non-retaining BoListNoRetain (BoListNoRetain.m:58-65)
+=-copy= hardcodes =[[BoListNoRetain alloc]…]=, so copying a =BoList= loses retain
+semantics and shares object pointers without retaining them. Use =[self class]=
+and respect the subclass's retain behaviour.
+
+*** [low] BoTimer.posix.m does not compile / wrong APIs
+- =#include <pthreads.h= is unterminated (missing =>=) — fatal on its own.
+- Uses Mach =cthread_*=/=mutex_*=/=condition_*= and 4.2BSD =sigvec=/=sigblock=
+  rather than POSIX =pthread=/=sigaction=, and passes =SIGALRM= where
+  =setitimer= expects =ITIMER_REAL=. The "posix" file is effectively NeXT/Mach.
+It is currently commented out of the Makefile (=#OBJCSOURCES += BoTimer.posix.m=);
+either port it properly to POSIX or mark it clearly unsupported.
+
+** Doc bug
+=BoArray.h:60-68= =resize:= PRE says =newSize>[self size]=, but the
+implementation (BoArray.m:119-124) explicitly handles shrinking. Fix the header.
+
+** Plan
+1. Fix removeObjectAt: bound; fix BoString insert (memmove + aliasing guard).
+2. Add pool dedup / over-release guard; fix dangling-dependants on free.
+3. Give getString: a size parameter; bound position:from:.
+4. Type the perform: IMP calls; stop routing =cause= through perform:.
+5. Decide BoTimer.posix fate (port or remove); fix the resize: doc.

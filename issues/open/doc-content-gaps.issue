@@ -1,0 +1,63 @@
+# -*- mode: org -*-
+#+TITLE: docs: content gaps to fill (contracts, algorithms, thread-safety)
+#+DATE: 2026-06-20
+
+* TODO [#B] Write the missing documentation content  :doc:content:
+
+The per-function header comments are unusually good (PRE/POST/RETURN/RAISE).
+What's missing is the *cross-cutting* documentation a user needs to use each
+library safely. Capture these in the per-module =.org= files (see
+[[file:doc-toolchain-orgmode.issue][doc-toolchain-orgmode]]).
+
+** Whole-tree
+- *Thread-safety statement.* Nothing documents that several pieces of mutable
+  global state are unsynchronised: =BcExcept= TRY-chain, =BcCStr= static return
+  buffers, =BcRandom= seed file, bplib/bolib delete pools. State plainly:
+  "single-threaded unless noted."
+- *Build/usage quickstart*: =make depend; make; make install=, default
+  =PREFIX=/usr/local=, module dependency order, =sudo make install=.
+
+** bclib
+- The =BcExcept= TRY/RAISE/HANDLER contract: balanced =BcTRY=/=BcENDTRY=, the
+  rule that =BcRETURN*= may only be used inside a live TRY, and that it is not
+  reentrant/thread-safe (see [[file:bclib-exceptions-and-globals.issue][bclib-exceptions-and-globals]]).
+- The =data1/data2= exception payload convention: values are stuffed into
+  =void*= via =(void*)(CARDPTR)x= and are *not pointers* — handlers must reverse
+  the cast. Currently only cryptic =/* CARD32 size,NIL */= comments.
+- =BcCStr= size-vs-length semantics (the off-by-one bug came from this being
+  unclear) and the non-reentrant static-buffer return convention.
+
+** benlib
+- The *char-name vocabulary* (PostScript glyph names used as the interchange
+  key) — the single most important concept for using or extending the library —
+  is undocumented. Add the list and the "add a new encoding" recipe.
+- Provenance/layout of the exotic encodings (Honeywell 200/600 SSF, Univac
+  Field Data, IBM BCD, EBCDIC variant): bit/column basis, octal codes, source.
+- A full worked conversion example (=BenMode_*=, replacement-string semantics).
+
+** bplib / bolib
+- *The ownership / refcounting contract* — the most error-prone part and only in
+  scattered comments. State: =init= yields useCount 0 owned by the delete pool
+  (autorelease-like); first =retain= removes it; balanced retain/release; who
+  owns returned objects (e.g. =BpDict::allKeys= returns a non-retained pooled
+  object); when to call =processReleasePool=/=processDeletePool=; exception
+  safety of mutators. Document the =assign(var,value)= macro.
+- =BoList= vs =BoListNoRetain= choice criteria and the dangling-pointer risk.
+
+** bprib / bpcombi
+- RIB mod-97 key algorithm: the formula (concatenate banque+guichet+compte+"00",
+  letter→digit substitution, key =(97-(N mod 97)) mod 97=), *why*, a worked
+  example, and a reference to the French RIB / IBAN standard.
+- Combinatorial enumeration: the lazy =getNextElement=/=done= protocol, the
+  state machine in =BpArrangementSansRepeat::step=, valid ranges for
+  =baseCardinal=/=elementSize=, and the =_cardinal= overflow limits.
+
+** Stale doc to fix while here
+- =BoArray.h:60-68= =resize:= PRE contradicts the code (says no-shrink; code
+  shrinks). Several =bjlib= header contracts are copy-paste stale (e.g.
+  =bjstring_search_forward= doc says "backward"; =bjstring_set_format_va=
+  actually appends and self-notes "we should change the name").
+
+** Plan
+Fill these as the =doc/*.org= files are written; treat the ownership/refcount
+contract and the benlib char-name vocabulary as the two highest-value pieces.

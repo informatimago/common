@@ -1,0 +1,67 @@
+# -*- mode: org -*-
+#+TITLE: docs: org-mode → pdf + html + info + man toolchain
+#+DATE: 2026-06-20
+
+* TODO [#B] Set up the documentation build (org → pdf/html/info/man)  :doc:build:
+
+Preference: documentation source is *org-mode*; from each =.org= we generate
+=pdf= (reading), =html= and =info= (browsing in Emacs), and =man= pages.
+
+** Current state
+There is essentially no user documentation: a few terse =README= files and
+=.txt= design notes (=bplib/design/NOTES.txt=, =bpcombi/analysis/analysis.txt=,
+=benlib/specifications/ASCIIs/ASCII.txt=). No generated formats, no man pages.
+The good per-function header comments (PRE/POST/RETURN/RAISE) are the real
+"docs" today but are not surfaced anywhere browsable.
+
+** Proposed layout
+Add a top-level =doc/= tree (org sources) and a generated tree under =$(PREFIX)=:
+#+begin_example
+doc/
+  common.org              ; umbrella: what the libraries are, build, install
+  bclib.org bjlib.org benlib.org bolib.org bplib.org bpcombi.org bprib.org
+  man/                    ; optional hand-written or generated *.N.org -> man
+  Makefile                ; org-export rules
+#+end_example
+Install targets:
+- =$(PREFIX)/share/doc/common/*.pdf=        (reading)
+- =$(PREFIX)/share/doc/common/html/*.html=  (browsing)
+- =$(PREFIX)/share/info/*.info= (+ =install-info=)   (Emacs/info)
+- =$(PREFIX)/share/man/man3/*.3=            (man)
+
+** Build mechanism (batch Emacs, no interactive session)
+Use =emacs --batch= with =ox-org=/=ox-html=/=ox-texinfo= and =ox-man= (or
+=org-man=). Sketch:
+#+begin_src makefile
+EMACS ?= emacs
+ORG_EXPORT = $(EMACS) --batch -Q \
+  --eval "(require 'ox-texinfo)" --eval "(require 'ox-html)" \
+  --visit "$<"
+%.texi: %.org ; $(ORG_EXPORT) -f org-texinfo-export-to-texinfo
+%.info: %.texi ; makeinfo --no-split -o $@ $<
+%.pdf:  %.texi ; texi2pdf -q -o $@ $<      # or org-latex-export-to-pdf
+%.html: %.org  ; $(ORG_EXPORT) -f org-html-export-to-html
+%.3:    %.man.org ; $(ORG_EXPORT) -f org-man-export-to-man && mv $*.man $@
+#+end_src
+(=pdf= via texinfo keeps one source path pdf+info; html+man exported separately.
+Pick =ox-man= from contrib, or write man pages from a small org→man template.)
+
+** Dependencies to note in README
+=emacs= (batch), =texinfo= (=makeinfo=, =install-info=), a TeX install
+(=texi2pdf= / =pdflatex=), and for man either Org's =ox-man= (org-contrib) or a
+=texi2roff=/=pandoc= fallback. Make the doc build *optional* (its own target, not
+part of =all=) so the libraries still build without Emacs/TeX.
+
+** Stretch: generate API stubs from headers
+The headers already carry structured PRE/POST/RETURN/RAISE blocks. A small
+script could scrape each public prototype + its comment into a per-module
+=*-api.org= included by the hand-written =*.org=, so the reference stays in sync
+with the code. Optional, but high value given how good the header comments are.
+
+** Plan
+1. Create =doc/= with an umbrella =common.org= + one =*.org= per module
+   (seed each from the module README + header contracts).
+2. Add =doc/Makefile= with the export rules above; wire an =install-doc=
+   target into the top Makefile (optional, guarded by =EMACS=/=makeinfo=).
+3. Write content per module — coordinate with [[file:doc-content-gaps.issue][doc-content-gaps]].
+4. Document the doc-build dependencies in the top README.

@@ -1,0 +1,63 @@
+# -*- mode: org -*-
+#+TITLE: bplib: collection, refcount, and copy-semantics bugs
+#+DATE: 2026-06-20
+
+* TODO [#A] bplib: collection + refcount bugs  :bplib:memory:cpp:
+
+** Findings — bugs
+
+*** [high] BpList::removeObjectAt reads one past the live data (BpList.cc:279-282)
+=while(index<lcount){ elements[index]=elements[index+1]; INC(index); }= reads
+=elements[lcount]= when =index==lcount-1=, before =lcount-- =. OOB on a full
+backing array. Fix: bound =index < lcount-1=. (Same family as BcList/bjarray/
+BoListNoRetain.)
+
+*** [medium] BpArray::insertObjectAt drops the last element and never grows (BpArray.cc:229-247)
+It shifts within the existing =lsize= and writes the new object but never
+increases =lsize= or resizes, so the previous last element is overwritten/lost
+and the retained element at =elements[lsize-1]= is leaked. It only "works"
+because =BpDict::setObjectForKey= happens to call =resize(size+1)= first;
+called directly it is wrong. Fix: grow by one (resize/shift) and release the
+overwritten slot before overwriting.
+
+*** [medium] BpObject::release underflows silently (BpObject.cc:283-287)
+=release()= does =fRetainCount--= unconditionally; an over-release drives the
+count negative, the ===0= re-add to the delete pool is skipped, and the object
+is leaked/lost rather than diagnosed. Add a =<0= check that raises (mirrors the
+double-release class of bug).
+
+*** [medium] BpDict::addEntriesFromDictionary signed/unsigned mismatch (BpDict.cc:331-335)
+=INT32 i,cnt; cnt=keys->size();= truncates a CARD32 into signed INT32; a size
+≥ 2^31 becomes negative and the loop misbehaves. Use CARD32 (as elsewhere).
+
+*** [low] BpDict::removeObjectForKey shrinks twice (BpDict.cc:445-456)
+=entries->removeObjectAt(num)= already compacts; the following
+=entries->resize(entries->size()-1)= removes/releases one *more* trailing entry.
+Drop the redundant resize.
+
+*** [low] BpString unsigned guards / underflow (BpString.cc:202,212,239,267,289-290)
+=charAt/setCharAt/_insertStringAt/deleteFromLength/positionFrom= test an unsigned
+CARD32 against =<0= / =0<=index= (dead guards); =positionFrom= computes
+=max=dlength-substring->dlength= unsigned and over-reads when the substring is
+longer. Guard =substring->dlength<=dlength= and drop/repair the dead tests.
+
+*** [low] BpString::printOnLevel malformed field token (BpString.cc:131)
+=PRINTONLEVEL(file,level,"\"%s\"",*data,data)= passes =*data= (a char) in the
+field-name slot. Harmless but wrong; pass the intended name token.
+
+** Findings — C++ hygiene
+
+*** [low] Rule-of-three violations on memory-owning classes
+=BpString= (owns =data=), =BpArray=/=BpList= (own =elements=), =BpDict= (owns
+=opaque=), =BpRIB=, and the =BpSetFunctor= hierarchy declare no copy
+constructor / copy-assignment. A default copy makes two owners of one buffer →
+double-free / double-release. Destructors are virtual (good), so slicing is
+mitigated, but copying is not. Fix: declare copy ops (delete them, or implement
+deep copy) per class.
+
+** Plan
+1. Fix BpList::removeObjectAt bound and BpArray::insertObjectAt growth/leak.
+2. Add the release-underflow guard; fix BpDict signedness and double-shrink.
+3. Repair BpString unsigned guards / positionFrom underflow.
+4. Add == delete= (or deep) copy ctor/assignment to the owning classes.
+5. Add ASan tests for insert/remove and a deliberate over-release.

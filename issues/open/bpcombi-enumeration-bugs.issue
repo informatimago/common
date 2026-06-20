@@ -1,0 +1,43 @@
+# -*- mode: org -*-
+#+TITLE: bpcombi: enumeration and allocation bugs
+#+DATE: 2026-06-20
+
+* TODO [#A] bpcombi: combinatorial enumeration bugs  :bpcombi:cpp:
+
+** Findings
+
+*** [high] BpCombination::done() uses = (assignment) instead of == (BpCombination.cc:71)
+=return(_choice[0]=_baseCardinal-_elementSize-1);= *assigns* to =_choice[0]= and
+returns the value, corrupting enumeration state and giving a bogus termination
+test. Fix: =return(_choice[0]==_baseCardinal-_elementSize-1);= — and re-derive
+the correct terminal value (the sibling =BpArrangementSansRepeat= terminates on
+=_choice[0]==_baseCardinal=; confirm which is intended).
+
+*** [high] combination(): off-by-one product → wrong binomial (BpCombination.cc:94)
+=for(i=a;i<=N;i++) r*=i;= multiplies an extra factor =a=; the comment says the
+product should run from =a+1=. Verified: C(4,2) yields *12* instead of 6. Fix:
+start the loop at =a+1=. (Also =r= overflows CARD32 for modest N — interleave
+the divide, or use a wider/exact type.)
+
+*** [high] new[] / scalar delete mismatch — UB (BpSetFunctor.cc:52,108-109; BpArrangementSansRepeat.cc:47,98)
+=_choice= (=new CARD32[...]=) and =_taken= (=new BOOLEAN[_baseCardinal]=) are
+freed with scalar =delete= (the =DELETE= macro and =reset()='s =delete(_choice)=).
+Mixing =new[]= with scalar =delete= is undefined behaviour. Fix: =delete[]=.
+
+*** [high] _choice allocated with _cardinal instead of _elementSize (BpSetFunctor.cc:109)
+=_choice=new CARD32[_cardinal];= but =_choice= only ever holds =_elementSize=
+indices. =_cardinal= is the *total number of combinations/arrangements* (e.g.
+=power(base,size)= for arrangements-with-repeat) — astronomically large →
+gross over-allocation / =bad_alloc= / overflow. Fix: =new CARD32[_elementSize]=.
+
+*** [medium] getNextElement / done signalling unreliable (BpSetFunctor.cc:134-147)
+It tests =!done()= before advancing and returns =done()= afterward; combined
+with the =/== bug above, "last element" signalling is wrong. Re-derive against
+the documented contract in =BpSetEnumerator.hh:85-96= and add tests.
+
+** Plan
+1. Fix done() (== and correct terminal value) and combination() (=a+1=, overflow).
+2. Fix all new[]/delete[] pairs and the _choice sizing.
+3. Add tests: enumerate C(n,k) and arrangements for small n,k and assert the full
+   set and exact count (catches off-by-one, premature/late termination, and the
+   over-allocation).

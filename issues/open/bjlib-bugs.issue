@@ -1,0 +1,72 @@
+# -*- mode: org -*-
+#+TITLE: bjlib: unsigned-underflow and refcount bugs
+#+DATE: 2026-06-20
+
+* TODO [#A] bjlib: string/array/object bugs  :critical:bjlib:memory:
+
+bjlib uses *unsigned* lengths/indices, so the many =if(x<0)= guards are dead and
+=length - other_length= underflows to a huge value → out-of-bounds scans.
+Line numbers are approximate (verify against current source).
+
+** Findings
+
+*** [critical] String searches underflow when needle longer than haystack (bjstring.c)
+=bjstring_search_*= (~513/547/574/609) compute =max = that->length -
+substring->length= as unsigned; when the needle is longer this wraps huge, the
+loop runs, and =that->data[pos+i]= reads far OOB.
+Fix: =if(substring->length>that->length) return that->length;= up front.
+
+*** [critical] Backward searches: =while(0<=pos)= with unsigned =pos= is always true (bjstring.c ~580/615)
+=pos--= underflows past 0 to UINT_MAX → unbounded OOB scan / infinite loop.
+Fix: use a signed index, or =do{…}while(pos-- > 0)=.
+
+*** [critical] bjstring_substitute_from: dead =if(from<0)=, unsigned underflow (bjstring.c ~755)
+=from= is unsigned, so the "not found" sentinel is never detected and
+=that->length-match->length= underflows. Check =from>=that->length=.
+
+*** [critical] bjstring_is_suffix: pointer-before-buffer (bjstring.c ~835)
+=that->data + that->length - suffix->length= underflows when the suffix is
+longer than the string; =strncmp= reads before the buffer. Guard the length first.
+
+*** [high] bjstring_char_index: null-deref (bjstring.c ~357)
+=if(that==0){ return(that->length); }= dereferences the null it just tested.
+Should return 0 (or an error sentinel).
+
+*** [high] bjarray_remove_element_at: duplicates an element / OOB (bjarray.c ~221)
+After the shift loop the trailing slot is filled from =elements[idx+1]= instead
+of being cleared, re-introducing an already-shifted (now over-referenced)
+element. Fix: clear the freed slot (=elements[count-1]=0=) and use the
+=idx+1<count= bound (same family as BcList/BpList/BoListNoRetain).
+
+*** [high] bjobject refcount / purgatory desync → possible double-free (bjobject.c ~347)
+=release= always re-adds the object to the =to_delete= purgatory at count 0, so
+an object can be queued more than once across retain/release cycles → double
+=delete=. Membership in the purgatory must track the retain count (dedup).
+
+*** [high] bjstring_list join: empty-array underflow (bjstring_list.c ~108)
+=(bjarray_count(strings)-1)*…= wraps to UINT_MAX for an empty list, and
+=bjarray_element_at(strings,0)= then indexes an empty array. Handle count==0.
+
+*** [medium] misc
+- =bjobject_new(unsigned size)= has a dead =if(size<0)=; callers cast
+  =(int)sizeof(...)*size= which overflows =int= for large sizes (bjarray.c ~83,127).
+- =*_copy_from_length= clamp via =length-idx=, underflowing when =idx>length=
+  (bjstring.c ~641, bjarray.c ~259).
+- =bjstring_read_a_line_from_file= does =data[length-1]= which underflows on a
+  zero-length read (bjstring_file.c ~141).
+- Unchecked =malloc= throughout (=bjobject_new=, =bjstring_new=).
+- =bjdict_entry_key= allocates a throwaway =bjstring_new_copy= per comparison
+  (bjdict.c ~132/288): steady memory bloat outside an event loop.
+
+*** [low]
+- =globles()= typo and a missing =;= under =#ifdef TRACE_OBJECTS= (won't compile
+  with tracing on) — bjobject.c.
+- Many dead =if(idx<0)= guards on unsigned parameters across bjstring.c.
+
+** Plan
+1. Add a "needle longer than haystack" guard helper and use it in all four
+   searches + suffix + substitute.
+2. Switch backward-scan indices to signed (or do/while).
+3. Fix bjarray_remove_element_at (clear slot, correct bound).
+4. Fix the purgatory dedup in bjobject; add a double-free test.
+5. Handle empty-array join; add malloc checks; fix the trace-mode compile.

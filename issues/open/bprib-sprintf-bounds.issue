@@ -1,0 +1,33 @@
+# -*- mode: org -*-
+#+TITLE: bprib: unchecked sprintf in computeCle
+#+DATE: 2026-06-20
+
+* TODO [#C] bprib: bound the sprintf in computeCle  :bprib:memory:
+
+*** [medium] sprintf into fixed rib[24] is unchecked (BpRIB.cc:190)
+#+begin_src c
+char rib[23+1];
+sprintf(rib,"%5s%5s%11s00",...);
+#+end_src
+=%5s= / =%11s= are *minimum* field widths, not limits; any argument longer than
+its field overflows =rib=. The public path (=getAndCheckAlphaNum=) validates
+exact lengths, but =computeCle= is also called directly from the constructor and
+trusts its arguments.
+Fix: use =snprintf(rib,sizeof rib,...)= and/or precision caps (=%.5s=, =%.11s=),
+or assert the argument lengths in =computeCle=.
+
+*** [low] bignum error hooks are silenced (BpRIB.cc:339-353)
+=rt_error= / =rt_warn= / =out_of_memory= are stubbed to no-ops, so bignum
+('number' module) error conditions are swallowed silently. Document this, or
+route them to BcExcept/stderr so failures are visible.
+
+** Notes
+- The =number.c= bignum implementation lives outside this module (only
+  =number.h= is included here), so its correctness was not reviewed.
+- The RIB mod-97 key algorithm itself looks correct but is undocumented — see
+  doc-content-gaps (add a worked example and a reference to the French RIB / IBAN
+  standard).
+
+** Plan
+1. Replace the sprintf with snprintf + precision, or assert lengths.
+2. Decide on bignum error propagation and document it.

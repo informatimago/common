@@ -1,0 +1,33 @@
+# -*- mode: org -*-
+#+TITLE: docs: README encoding + stale build README
+#+DATE: 2026-06-20
+
+* TODO [#C] Fix README encoding and stale makedir/README  :doc:readme:
+
+*** [low] Top README is Latin-1, shows mojibake on UTF-8 systems (README)
+=file= reports =ISO-8859 text=; line 19 contains =Relev\xe9s d'Identit\xe9= (é =
+0xE9, Latin-1), which renders as =Relev?s d'Identit?= on a UTF-8 terminal/editor.
+Fix: convert to UTF-8 (=iconv -f ISO-8859-1 -t UTF-8 README > README.utf8 && mv=)
+and, once the doc toolchain exists, fold this content into =doc/common.org=.
+Check other files for the same: =benlib= notes and any source comment headers
+with accented author/text may also be Latin-1.
+
+*** [medium] makedir/README documents variables that no longer exist (makedir/README:60-86)
+It describes =SUBPROJECT=/=PROGRAMNAME=/=LIBRARYNAME=​= and a =lib/module= layout,
+but the actual Makefiles use =MODULES=/=PROGRAMS=/=LIBRARIES=​= plus
+=*_OBJECTS=/=*_LIBRARIES=​= (see =bclib/sources/Makefile:92-93=,
+=bplib/tests/BpDictTest/sources/Makefile:76-82=). A new user copying README's
+names gets nothing built. Rewrite to match the real conventions and add the
+items listed in [[file:build-system.issue][build-system]] (two-pass depend, install order, =TARGET=,
+default =PREFIX=, =-Werror -pedantic-errors= strictness).
+
+*** [low] Top README is informal and incomplete
+It lists the modules but not: how to build/install, the dependency order, the
+=PREFIX=/=TARGET= variables, or platform support. Fold into =doc/common.org=
+(reading/browsing) once the toolchain exists, keeping a short plain-text README
+that points at the generated docs.
+
+** Plan
+1. =iconv= the README to UTF-8 (quick win); scan the tree for other Latin-1 files.
+2. Rewrite =makedir/README= against the real variable names.
+3. Migrate prose into =doc/*.org= per [[file:doc-toolchain-orgmode.issue][doc-toolchain-orgmode]]; leave a thin README.

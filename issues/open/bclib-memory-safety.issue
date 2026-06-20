@@ -1,0 +1,63 @@
+# -*- mode: org -*-
+#+TITLE: bclib: memory-safety bugs
+#+DATE: 2026-06-20
+
+* TODO [#A] bclib: memory-safety bugs  :critical:bclib:memory:
+
+Severity: *high/critical* — out-of-bounds accesses and undefined behaviour.
+
+** Findings
+
+*** [high] BcMem_Clear / BcMem_Fill: wrong alignment test → misaligned CARD32 access (BcMem.c:105-128,151-174)
+The alignment checks mask with =((CARDPTR)p) & (CARDPTR)sizeof(T)= instead of
+=& (sizeof(T)-1)=. For CARD16 that tests bit 1 (=addr & 2=), not "is the address
+odd" (=addr & 1=). An address with =addr&1==1= but =addr&2==0= skips the
+byte/half-word pre-alignment and then dereferences a =CARD32*= / =CARD16*= at a
+misaligned address: UB, and a fault on strict-alignment targets.
+Fix: mask with =(sizeof(T)-1)=.
+
+*** [high] BcMem_Copy: insufficient alignment handling (BcMem.c:190,211-247)
+The "same parity" branch compares only =from&1 == to&1= and then aligns/advances
+on =((CARDPTR)from)&3= using the *original* =from= (never the advancing
+pointer), so the byte-prefix loop terminates wrong and two pointers congruent
+mod 2 but not mod 4 still reach a misaligned =CARD32*= dereference.
+Fix: require =from= and =to= congruent mod 4 before the word loop, and align
+using the moving pointer; otherwise fall back to byte copy.
+
+*** [high] BcCStr_Terminate: writes past terminator / one byte past buffer (BcCStr.c:127)
+After =BcCStr_Assign= already NUL-terminates, the extra =buffer[length+1]=0;=
+leaves =buffer[length]= as garbage *inside* the returned string and writes at
+=length+1= (=buffer[1024]= when =length==1023=). Fix: drop the extra line (or
+terminate once at the correct index and size the buffer accordingly).
+
+*** [high] BcCStr_RepeatChar: unclamped index in cache fast-path (BcCStr.c:96-99)
+The fast path =if((count<=oldcount)&&(c==oldc))= runs *before* =count= is
+clamped to [0,1023]; a negative =count= reaches =buffer[count]=0;= (negative
+index, OOB write). Fix: clamp =count= before the cache check.
+
+*** [medium] BcList_RemoveObjectAt: reads one element past the array (BcList.c:261-264)
+=while(idx<plist->count){ elements[idx]=elements[idx+1]; idx++; }= reads
+=elements[count]= when =idx==count-1= (OOB when the array is full) and does one
+useless copy. Fix: loop while =idx+1<count=.
+(Confirmed; same pattern exists in bplib and bolib — see those issues.)
+
+*** [medium] BcString bounds / sign issues (BcString.c)
+- =BcString_CopyFromLength= (~343): only the upper bound is clamped; a negative
+  =idx= or =idx>dlength= leads to an OOB =BcMem_Copy=. Validate =0<=idx<=dlength=.
+- =BcString_DeleteFromLength= (~295): negative =delen= not rejected; =idx+delen=
+  can overflow INT32 and produce an over-long copy. Require =delen>=0=.
+- =BcString_PositionFrom= (~315-326): inner match loop is not bounded by
+  =sub->dlength=; it relies on NUL terminators and over-reads on a tail match.
+  Bound =i= by =sub->dlength=.
+
+*** [medium] Unchecked size arithmetic in BcList growth (BcList.c:197,229,312; alloc at 75/141)
+=2*capacity=, =count+other->count=, and =sizeof(void*)*newCapacity= can wrap
+CARD32, yielding a too-small allocation then OOB writes. Add overflow checks
+before doubling/multiplying. (Needs very large lists on 64-bit, but real.)
+
+** Plan
+1. Fix the alignment masks in BcMem (use =sizeof-1=); add a misaligned-buffer test.
+2. Fix the two BcCStr OOB writes; clarify the size/length contract (see doc-content-gaps).
+3. Fix BcList_RemoveObjectAt bound and add overflow guards on growth.
+4. Add lower-bound/overflow validation to the three BcString functions.
+5. Run the test suite under AddressSanitizer/UBSan to confirm.

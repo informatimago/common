@@ -1,0 +1,55 @@
+# -*- mode: org -*-
+#+TITLE: benlib: BenConvertString is broken (critical)
+#+DATE: 2026-06-20
+
+* TODO [#A] benlib: fix BenConvertString  :critical:benlib:memory:
+
+Severity: *critical* — wrong results and memory-unsafe.
+
+File: =benlib/sources/Bencoding.c=, function =BenConvertString= (~lines 385–420).
+
+The core string-conversion routine has three independent defects; together it
+reads out of bounds and can loop forever / overflow its buffer.
+
+** Findings
+
+*** [critical] Uninitialised input index =i= (Bencoding.c:390,393,405,412)
+=int i;= is declared, then used as the loop variable of the "longest converted
+string" scan =for(i=0;i<256;i++)=. It is left at =256= and *never reset to 0*
+before the conversion loops =while(string[i]!='\0')=. The function starts
+reading the input at =string[256]= (out-of-bounds for any string shorter than
+257 bytes) and the conversion is entirely wrong.
+
+Fix: add =i=0;= immediately before the first =while(string[i]!='\0')=.
+
+*** [critical] Inner copy loop never advances =i= → infinite loop / buffer overflow (Bencoding.c:414–420)
+In the main loop:
+#+begin_src c
+while((string[i]!='\0')&&(j<ml)){
+    const char* converted=(*table)[(int)(string[i])];
+    while((*converted)!='\0'){
+        buffer[j++]=(*converted);     /* j only bounded at OUTER while */
+        converted++;
+    }
+}
+#+end_src
+=i= is never incremented inside the loop, so the same source char is converted
+forever; =j= is only checked against =ml= at the top of the =while=, so the
+inner =buffer[j++]= copy runs =j= past the 1024-byte =buffer= → overflow.
+
+Fix: increment =i= once per source char, and bound =j<ml= while copying each
+converted string (break/flush when the buffer is full).
+
+*** [high] char used as table index without =(unsigned char)= (Bencoding.c:405,415)
+=(*table)[(int)(string[i])]= sign-extends a signed =char=; bytes ≥ 0x80 become
+negative indices (=(*table)[-1]= …), reading before the 256-entry table. This
+is exactly the high-byte range the exotic encodings (Honeywell, EBCDIC, …)
+use, so it is not a corner case here.
+
+Fix: =(*table)[(unsigned char)string[i]]= at every table index in this file.
+
+** Plan
+1. Reset =i=0=; rewrite the conversion loop to advance =i= and bound =j=.
+2. Replace every =(int)(string[i])= table index with =(unsigned char)string[i]=.
+3. Add a unit test: round-trip a string containing bytes 0x00–0xFF through a
+   known encoding and back; assert equality and no overflow (ASan).

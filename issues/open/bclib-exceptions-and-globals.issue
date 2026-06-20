@@ -1,0 +1,41 @@
+# -*- mode: org -*-
+#+TITLE: bclib: exceptions reentrancy + global-state hazards
+#+DATE: 2026-06-20
+
+* TODO [#B] bclib: exception machinery + global state  :bclib:exceptions:threadsafety:
+
+** Findings
+
+*** [medium] BcExcept: non-reentrant, not thread-safe, fragile macros (BcExcept.h:82-134)
+- =BcTRY_CurrentEnvironment= is a single process-global longjmp chain with no
+  locking: TRY/HANDLER cannot be used from more than one thread.
+- =BcRETURNVALUE= / =BcRETURNVOID= unconditionally pop the chain
+  (=...=...->next;=). If used in a function entered without a surrounding
+  =BcTRY=, or after =BcENDTRY=, they pop the wrong frame and silently corrupt
+  the handler stack. There is no compile-time pairing check.
+Fix options: document the constraints loudly (minimum); or make the chain
+thread-local (=__thread=/=_Thread_local=); or add a debug-mode balance assert
+that =BcRETURN*= only pops a frame it actually pushed.
+
+*** [medium] BcRandom: documented env override is dead code; unchecked fopen (BcRandom.c:148-155)
+- =fname=getenv("BcRandom_FilePath")= is read and defaulted but never used —
+  every =fopen= uses the compile-time macro =RANDOMFILE=. The documented
+  override does nothing. (Header even names it =BcRandomFilePath=, no
+  underscore — a third spelling.)
+- On read-open failure it does =fd=fopen(RANDOMFILE,"w+"); save(fd,...)= with no
+  NULL check; if the =w+= open also fails, =save= calls =fprintf(NULL,...)= → UB.
+Fix: actually use =fname= in the =fopen= calls, reconcile the env-var name with
+the header, and NULL-check =fd= before =save=/=fseek=.
+
+*** [low] Process-wide mutable state is undocumented and racy
+- =BcRandom= reads/advances/rewrites a shared seed file with no locking
+  (concurrent processes clobber each other / read partial writes).
+- =BcCStr_RepeatChar= and =BcCStr_Terminate= return pointers into function-local
+  =static= buffers: not reentrant, and a caller holding two results aliases them.
+Fix: document "single-threaded only" for these, or add locking / caller-provided
+buffers. See doc-content-gaps for the thread-safety statement that's missing.
+
+** Plan
+1. Decide the threading stance (document single-threaded vs. make thread-local).
+2. Fix BcRandom: use =fname=, NULL-check =fd=, reconcile the env-var name.
+3. Add the thread-safety / static-buffer caveats to the headers.

@@ -1,0 +1,60 @@
+# -*- mode: org -*-
+#+TITLE: benlib: encoding-table data errors
+#+DATE: 2026-06-20
+
+* TODO [#B] benlib: fix encoding-table data errors  :benlib:data:
+
+Severity: *high* (silent wrong conversions) — these are data bugs, not crashes:
+affected characters simply fail to convert or have no ASCII approximation.
+
+benlib keys every encoding to a PostScript-style glyph *char-name* (e.g.
+="hyphen"=, ="asterisk"=). A typo or mismatched name in any table silently
+breaks conversion and approximation for that code point.
+
+** Findings
+
+*** [high] Missing comma merges two entries (approxim.c:352)
+=  { "minus"               "-" },=
+Adjacent string literals concatenate, so this is =​{ "minus-", 0 }=: there is
+now *no* ="minus"= approximation, and a bogus ="minus-"= key is injected.
+Fix: =  { "minus",               "-" },=
+
+*** [high] Same code point, different char-name across tables — =-= won't convert
+- ASCII 0x2D = ="hyphen"= (encascii.c:46) vs ISO-Latin-1 0x2D = ="minus"= (encisla1.c:76).
+- =*= is ="star"= in the Honeywell/IBM/Univac/EBCDIC tables (ench2bcd.c:75,
+  ench6bcd.c:75, encibbcd.c:75, encebcdi.c:123, encunifd.c:72) but ="asterisk"=
+  in ASCII/PostScript/approxim.
+Because conversion is name→name, =-= and =*= fail to cross these encodings and
+have no approximation. Fix: pick one canonical name per code point
+(suggest ="hyphen"= and ="asterisk"=) and use it everywhere.
+
+*** [medium] char-name typos (non-existent names → never convert)
+- =encebcdi.c:159= ="onequater"= → ="onequarter"=.
+- =encibbcd.c:58=  ="coma"=       → ="comma"=.
+- =ench6bcd.c:89=  ="hypen"=      → ="hyphen"= (comment already flags it as a dup of 0x2A).
+
+*** [medium] EBCDIC 0x79 mapped to ="cent"= (encebcdi.c:152)
+0x4A is already ¢; standard EBCDIC 0x79 is the grave accent =`=. The duplicate
+loses the backtick. Verify against the intended EBCDIC variant and fix.
+
+*** [low] Suspicious / duplicate entries to verify
+- =approxim.c:249-250= duplicate key ="dblrightdbldownbar"= (second unreachable).
+- =encmsdos.c:158,155= 0x7F→="Delta"=, 0x7C→="bar"= (comment: "actually
+  brokenbar"); CP437 0x7F is a house/⌂ glyph. Verify against CP437.
+- =enctypes.h:35-36= ="BenStringP .charName;"= is not valid C (stray dot); it is
+  shadowed by Bencoding.h today but will not compile if ever included directly.
+  Delete or fix.
+
+** Note (NOT bugs — internally consistent despite looking misspelled)
+="logicalnotmirored"= (encmsdos.c:200 + approxim.c:346) and
+="intergraltp"/"intergralbt"= (encmsdos.c:275-276 + approxim.c:326-327) are
+misspelled but *consistently*, so they convert fine. Fixing the spelling means
+fixing both sites together. The =encebcdi.c:207 "/* 80 */"= row comment is
+mislabelled (it is 0xB0) but the data order is correct — comment-only.
+
+** Plan
+1. Add the missing comma (approxim.c:352).
+2. Canonicalise ="hyphen"= and ="asterisk"= across all tables.
+3. Fix the four typos; verify EBCDIC 0x79 and the MSDOS/CP437 entries.
+4. Add a test that every char-name used in any =enc*.c= table exists as a key in
+   =approxim.c= (and ideally in ASCII), to catch this whole class automatically.
