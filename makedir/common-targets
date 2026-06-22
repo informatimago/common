@@ -39,7 +39,7 @@ LINE2="========================================================================"
 LINE3="------------------------------------------------------------------------"
 LINE3="........................................................................"
 
-COMMON_TARGETS = all install uninstall  \
+COMMON_TARGETS = all install-files uninstall  \
 				 clean cleanall distclean cvsclean  \
 				 depend showvars help \
 				 conflicts
@@ -61,6 +61,40 @@ $(COMMON_TARGETS) ::
 
 conflicts ::
 	-@find . -type f -name '*[^~]' -exec egrep -n '[<]<[<]<[<]|[>]>[>]>[>]' {} /dev/null \;
+
+.PHONY :: install
+# install -- privilege-aware wrapper, shared by the project, module and
+# leaf makefiles (all of which include this file).
+#
+# The actual file copying lives in the `install-files' target (a
+# COMMON_TARGET, recursed down the tree exactly like `all').  This
+# wrapper only decides *who* builds:
+#
+#   * root via sudo  -> build `all' as the invoking user ($SUDO_USER) so
+#                       that no root-owned object files are left behind in
+#                       the source tree, then copy as root.
+#   * plain user     -> build then copy, exactly as before.
+#   * real root      -> build as root (with a warning); there is no user
+#                       to drop to.
+#
+# Because it invokes `all'/`install-files' (never `install') the tree is
+# built once and copied once, with no recursion back into this rule.
+install ::
+	@if [ "$$(id -u)" = 0 ] && [ -n "$$SUDO_USER" ]; then \
+		echo "install: root via sudo -- building as $$SUDO_USER, installing as root" ;\
+		sudo -u "$$SUDO_USER" $(MAKE) $(MFLAGS) \
+			TARGET=$(TARGET) MAKEDIR=$(MAKEDIR) PREFIX=$(PREFIX) MODULE=$(MODULE) all ;\
+	elif [ "$$(id -u)" = 0 ]; then \
+		echo "install: WARNING -- running as real root with no SUDO_USER;" ;\
+		echo "install:            build artifacts will be root-owned." ;\
+		$(MAKE) $(MFLAGS) \
+			TARGET=$(TARGET) MAKEDIR=$(MAKEDIR) PREFIX=$(PREFIX) MODULE=$(MODULE) all ;\
+	else \
+		$(MAKE) $(MFLAGS) \
+			TARGET=$(TARGET) MAKEDIR=$(MAKEDIR) PREFIX=$(PREFIX) MODULE=$(MODULE) all ;\
+	fi
+	@$(MAKE) $(MFLAGS) \
+		TARGET=$(TARGET) MAKEDIR=$(MAKEDIR) PREFIX=$(PREFIX) MODULE=$(MODULE) install-files
 
 # This is for Emacs.
 # Local Variables:

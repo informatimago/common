@@ -183,7 +183,10 @@ version.h :: VERSION
 # 	@echo I="$(INTERFACES)" 
 # 	@echo D="$(DOCUMENTATION)" 
 # 	@echo M="$(MANPAGES)" 
-install :: all
+# install-files -- pure copy step (no `all' prereq).  The privilege-aware
+# `install' wrapper in common-targets builds `all' first, as the right
+# user, then invokes this target to copy the results into $(PREFIX).
+install-files ::
 	@[ -z "$(PROGRAMS)" ] \
 	|| ( umask 022 ;\
 		 mkdir -p $(BINIDIR) 2>/dev/null || true ;\
